@@ -12,6 +12,7 @@
  * - {@link WaitGroup} - wait for a collection of operations to finish
  * - {@link Semaphore} - counting semaphore for resource permits
  * - {@link Cond} (from `cond.ts`) - conditional variable helpers
+ * - {@link Once} - ensures a function is executed exactly once
  *
  * Example
  * ```ts
@@ -33,3 +34,4 @@ export * from "./rwmutex.ts";
 export * from "./waitgroup.ts";
 export * from "./semaphore.ts";
 export * from "./cond.ts";
+export * from "./once.ts";

@@ -99,8 +99,7 @@ Releases the lock.
 
 ```ts
 class RWMutex {
-    readCount: number;
-    writeLocked: boolean;
+    constructor();
 }
 ```
 
@@ -172,8 +171,6 @@ Checks if write locked.
 
 ```ts
 class Semaphore {
-    availablePermits: number;
-    queueLength: number;
     constructor(permits: number);
 }
 ```
@@ -222,7 +219,7 @@ Tries to acquire a permit without waiting.
 
 ```ts
 class WaitGroup {
-    counter: number;
+    constructor();
 }
 ```
 
@@ -232,7 +229,7 @@ class WaitGroup {
 add(delta: number): void
 ```
 
-Adds delta to the counter.
+Adds delta to the .
 
 ### function (WaitGroup).counter
 
@@ -265,6 +262,24 @@ wait(): Promise<void>
 ```
 
 Waits until the counter is zero.
+
+### Once
+
+```ts
+class Once {
+    constructor();
+}
+```
+
+Once is an object that will perform exactly one action.
+
+### function (Once).do
+
+```ts
+do<T>(f: () => T | Promise<T>): Promise<T>
+```
+
+Calls the function f if and only if do is being called for the first time for this instance of Once. If f throws an error, do considers it to have completed; future calls of do return without calling f.
 
 ## Functions
 

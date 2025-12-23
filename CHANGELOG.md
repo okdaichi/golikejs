@@ -8,6 +8,15 @@ The format is based on "Keep a Changelog" and this project adheres to Semantic V
 
 ## [Unreleased]
 
+### Added
+
+- **`sync.Once`**: Added Go-style `Once` synchronization primitive to the sync package.
+  - Ensures a function is executed exactly once, even under concurrent calls
+  - Promise-based implementation optimized for JavaScript's event loop
+  - Full type safety with generic return types
+  - Handles errors while marking the operation as "done" (matching Go semantics)
+  - Includes comprehensive test suite (9 test cases) covering concurrent execution, error handling, and type preservation
+
 ## [0.6.1] - 2025-12-09
 
 ### Changed

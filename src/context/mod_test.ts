@@ -4,13 +4,13 @@ import {
 	background,
 	ContextCancelledError,
 	ContextTimeoutError,
+	toAbortSignal,
 	watchPromise,
 	watchSignal,
 	withAbort,
 	withCancel,
 	withCancelCause,
 	withTimeout,
-	toAbortSignal,
 } from "./mod.ts";
 
 // The tests below validate that the re-exports from `context package` behave the same as
@@ -111,4 +111,3 @@ Deno.test("context package - ContextCancelledError and ContextTimeoutError expor
 	assert(te instanceof Error);
 	assertEquals(te.message, "timeout occurred");
 });
-

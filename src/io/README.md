@@ -25,11 +25,9 @@ interface Closer {
 ### EOFError
 
 ```ts
-class EOFError extends Error
-```
-
-```ts
-constructor()
+class EOFError extends Error {
+	constructor();
+}
 ```
 
 ### Reader

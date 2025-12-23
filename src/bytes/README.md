@@ -11,7 +11,7 @@ Byte-slice helpers and buffer utilities.
 ## Constants
 
 ```ts
-const MinRead = 512
+const MinRead = 512;
 ```
 
 Minimum read buffer size.
@@ -22,9 +22,9 @@ Minimum read buffer size.
 
 ```ts
 class Buffer implements Reader, Writer {
-    size: number;
-    capacity: number;
-    constructor(memory: ArrayBufferLike);
+	size: number;
+	capacity: number;
+	constructor(memory: ArrayBufferLike);
 }
 ```
 
@@ -47,7 +47,7 @@ Returns the capacity of the buffer.
 ### function (Buffer).capacity
 
 ```ts
-capacity: number
+capacity: number;
 ```
 
 Gets the capacity of the buffer.
@@ -143,7 +143,7 @@ Resets the buffer to be empty but retains the underlying storage.
 ### function (Buffer).size
 
 ```ts
-size: number
+size: number;
 ```
 
 Gets the number of bytes of the unread portion of the buffer.
@@ -235,7 +235,7 @@ constructor(message?: string)
 ### function clone
 
 ```ts
-function clone(src: Uint8Array): Uint8Array
+function clone(src: Uint8Array): Uint8Array;
 ```
 
 Returns a copy of the given byte slice.
@@ -243,7 +243,7 @@ Returns a copy of the given byte slice.
 ### function compare
 
 ```ts
-function compare(a: Uint8Array, b: Uint8Array): number
+function compare(a: Uint8Array, b: Uint8Array): number;
 ```
 
 Returns an integer comparing two byte slices lexicographically.
@@ -251,7 +251,7 @@ Returns an integer comparing two byte slices lexicographically.
 ### function contains
 
 ```ts
-function contains(b: Uint8Array, subslice: Uint8Array): boolean
+function contains(b: Uint8Array, subslice: Uint8Array): boolean;
 ```
 
 Reports whether subslice is within b.
@@ -259,7 +259,7 @@ Reports whether subslice is within b.
 ### function containsAny
 
 ```ts
-function containsAny(b: Uint8Array, chars: string): boolean
+function containsAny(b: Uint8Array, chars: string): boolean;
 ```
 
 Reports whether any of the UTF-8-encoded code points in chars are within b.
@@ -267,7 +267,7 @@ Reports whether any of the UTF-8-encoded code points in chars are within b.
 ### function count
 
 ```ts
-function count(s: Uint8Array, sep: Uint8Array): number
+function count(s: Uint8Array, sep: Uint8Array): number;
 ```
 
 Counts the number of non-overlapping instances of sep in s.
@@ -275,7 +275,7 @@ Counts the number of non-overlapping instances of sep in s.
 ### function cut
 
 ```ts
-function cut(s: Uint8Array, sep: Uint8Array): [Uint8Array, Uint8Array, boolean]
+function cut(s: Uint8Array, sep: Uint8Array): [Uint8Array, Uint8Array, boolean];
 ```
 
 Slices s around the first instance of sep, returning the text before and after sep.
@@ -283,7 +283,7 @@ Slices s around the first instance of sep, returning the text before and after s
 ### function cutPrefix
 
 ```ts
-function cutPrefix(s: Uint8Array, prefix: Uint8Array): [Uint8Array, boolean]
+function cutPrefix(s: Uint8Array, prefix: Uint8Array): [Uint8Array, boolean];
 ```
 
 Returns s without the provided leading prefix slice and reports whether it found the prefix.
@@ -291,7 +291,7 @@ Returns s without the provided leading prefix slice and reports whether it found
 ### function cutSuffix
 
 ```ts
-function cutSuffix(s: Uint8Array, suffix: Uint8Array): [Uint8Array, boolean]
+function cutSuffix(s: Uint8Array, suffix: Uint8Array): [Uint8Array, boolean];
 ```
 
 Returns s without the provided ending suffix slice and reports whether it found the suffix.
@@ -299,7 +299,7 @@ Returns s without the provided ending suffix slice and reports whether it found 
 ### function equal
 
 ```ts
-function equal(a: Uint8Array, b: Uint8Array): boolean
+function equal(a: Uint8Array, b: Uint8Array): boolean;
 ```
 
 Reports whether a and b are the same length and contain the same bytes.
@@ -307,7 +307,7 @@ Reports whether a and b are the same length and contain the same bytes.
 ### function equalFold
 
 ```ts
-function equalFold(s: Uint8Array, t: Uint8Array): boolean
+function equalFold(s: Uint8Array, t: Uint8Array): boolean;
 ```
 
 Reports whether s and t, interpreted as UTF-8 strings, are equal under Unicode case-folding.
@@ -315,7 +315,7 @@ Reports whether s and t, interpreted as UTF-8 strings, are equal under Unicode c
 ### function fields
 
 ```ts
-function fields(s: Uint8Array): Uint8Array[]
+function fields(s: Uint8Array): Uint8Array[];
 ```
 
 Splits the slice s around each instance of one or more consecutive white space characters.
@@ -323,7 +323,7 @@ Splits the slice s around each instance of one or more consecutive white space c
 ### fieldsFunc
 
 ```ts
-function fieldsFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Array[]
+function fieldsFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Array[];
 ```
 
 Splits the slice s into subslices according to the predicate f.
@@ -331,7 +331,7 @@ Splits the slice s into subslices according to the predicate f.
 ### hasPrefix
 
 ```ts
-function hasPrefix(s: Uint8Array, prefix: Uint8Array): boolean
+function hasPrefix(s: Uint8Array, prefix: Uint8Array): boolean;
 ```
 
 Tests whether the byte slice s begins with prefix.
@@ -339,7 +339,7 @@ Tests whether the byte slice s begins with prefix.
 ### hasSuffix
 
 ```ts
-function hasSuffix(s: Uint8Array, suffix: Uint8Array): boolean
+function hasSuffix(s: Uint8Array, suffix: Uint8Array): boolean;
 ```
 
 Tests whether the byte slice s ends with suffix.
@@ -347,7 +347,7 @@ Tests whether the byte slice s ends with suffix.
 ### index
 
 ```ts
-function index(s: Uint8Array, sep: Uint8Array): number
+function index(s: Uint8Array, sep: Uint8Array): number;
 ```
 
 Returns the index of the first instance of sep in s, or -1 if sep is not present in s.
@@ -355,7 +355,7 @@ Returns the index of the first instance of sep in s, or -1 if sep is not present
 ### indexAny
 
 ```ts
-function indexAny(s: Uint8Array, chars: string): number
+function indexAny(s: Uint8Array, chars: string): number;
 ```
 
 Returns the byte index of the first occurrence in s of any of the Unicode code points in chars.
@@ -363,7 +363,7 @@ Returns the byte index of the first occurrence in s of any of the Unicode code p
 ### indexByte
 
 ```ts
-function indexByte(s: Uint8Array, c: number): number
+function indexByte(s: Uint8Array, c: number): number;
 ```
 
 Returns the index of the first instance of c in s, or -1 if c is not present in s.
@@ -371,7 +371,7 @@ Returns the index of the first instance of c in s, or -1 if c is not present in 
 ### indexFunc
 
 ```ts
-function indexFunc(s: Uint8Array, f: (r: number) => boolean): number
+function indexFunc(s: Uint8Array, f: (r: number) => boolean): number;
 ```
 
 Returns the byte index in s of the first Unicode code point satisfying f(c), or -1 if none do.
@@ -379,7 +379,7 @@ Returns the byte index in s of the first Unicode code point satisfying f(c), or 
 ### indexRune
 
 ```ts
-function indexRune(s: Uint8Array, r: number): number
+function indexRune(s: Uint8Array, r: number): number;
 ```
 
 Returns the byte index of the first occurrence in s of the given rune, or -1 if rune is not present in s.
@@ -387,7 +387,7 @@ Returns the byte index of the first occurrence in s of the given rune, or -1 if 
 ### join
 
 ```ts
-function join(s: Uint8Array[], sep: Uint8Array): Uint8Array
+function join(s: Uint8Array[], sep: Uint8Array): Uint8Array;
 ```
 
 Concatenates the elements of s to create a new byte slice.
@@ -395,7 +395,7 @@ Concatenates the elements of s to create a new byte slice.
 ### lastIndex
 
 ```ts
-function lastIndex(s: Uint8Array, sep: Uint8Array): number
+function lastIndex(s: Uint8Array, sep: Uint8Array): number;
 ```
 
 Returns the index of the last instance of sep in s, or -1 if sep is not present in s.
@@ -403,7 +403,7 @@ Returns the index of the last instance of sep in s, or -1 if sep is not present 
 ### lastIndexAny
 
 ```ts
-function lastIndexAny(s: Uint8Array, chars: string): number
+function lastIndexAny(s: Uint8Array, chars: string): number;
 ```
 
 Returns the byte index of the last occurrence in s of any of the Unicode code points in chars.
@@ -411,7 +411,7 @@ Returns the byte index of the last occurrence in s of any of the Unicode code po
 ### lastIndexByte
 
 ```ts
-function lastIndexByte(s: Uint8Array, c: number): number
+function lastIndexByte(s: Uint8Array, c: number): number;
 ```
 
 Returns the index of the last instance of c in s, or -1 if c is not present in s.
@@ -419,7 +419,7 @@ Returns the index of the last instance of c in s, or -1 if c is not present in s
 ### lastIndexFunc
 
 ```ts
-function lastIndexFunc(s: Uint8Array, f: (r: number) => boolean): number
+function lastIndexFunc(s: Uint8Array, f: (r: number) => boolean): number;
 ```
 
 Returns the byte index in s of the last Unicode code point satisfying f(c), or -1 if none do.
@@ -427,7 +427,7 @@ Returns the byte index in s of the last Unicode code point satisfying f(c), or -
 ### map
 
 ```ts
-function map(mapping: (r: number) => number, s: Uint8Array): Uint8Array
+function map(mapping: (r: number) => number, s: Uint8Array): Uint8Array;
 ```
 
 Returns a copy of the byte slice s with all its characters modified according to the mapping function.
@@ -435,7 +435,7 @@ Returns a copy of the byte slice s with all its characters modified according to
 ### repeat
 
 ```ts
-function repeat(b: Uint8Array, count: number): Uint8Array
+function repeat(b: Uint8Array, count: number): Uint8Array;
 ```
 
 Returns a new byte slice consisting of count copies of b.
@@ -443,7 +443,7 @@ Returns a new byte slice consisting of count copies of b.
 ### replace
 
 ```ts
-function replace(s: Uint8Array, old: Uint8Array, new_: Uint8Array, n: number): Uint8Array
+function replace(s: Uint8Array, old: Uint8Array, new_: Uint8Array, n: number): Uint8Array;
 ```
 
 Returns a copy of the slice s with the first n non-overlapping instances of old replaced by new.
@@ -451,7 +451,7 @@ Returns a copy of the slice s with the first n non-overlapping instances of old 
 ### replaceAll
 
 ```ts
-function replaceAll(s: Uint8Array, old: Uint8Array, new_: Uint8Array): Uint8Array
+function replaceAll(s: Uint8Array, old: Uint8Array, new_: Uint8Array): Uint8Array;
 ```
 
 Returns a copy of the slice s with all non-overlapping instances of old replaced by new.
@@ -459,7 +459,7 @@ Returns a copy of the slice s with all non-overlapping instances of old replaced
 ### runWhile
 
 ```ts
-function runWhile(s: Uint8Array, i: number, r: (b: number) => boolean): Uint8Array
+function runWhile(s: Uint8Array, i: number, r: (b: number) => boolean): Uint8Array;
 ```
 
 Returns a subslice of s, starting at index i and extending as long as r(i) returns true for each element.
@@ -467,7 +467,7 @@ Returns a subslice of s, starting at index i and extending as long as r(i) retur
 ### split
 
 ```ts
-function split(s: Uint8Array, sep: Uint8Array, n: number): Uint8Array[]
+function split(s: Uint8Array, sep: Uint8Array, n: number): Uint8Array[];
 ```
 
 Slices s into all subslices separated by sep and returns a slice of the subslices between those separators.
@@ -475,7 +475,7 @@ Slices s into all subslices separated by sep and returns a slice of the subslice
 ### splitAfter
 
 ```ts
-function splitAfter(s: Uint8Array, sep: Uint8Array, n: number): Uint8Array[]
+function splitAfter(s: Uint8Array, sep: Uint8Array, n: number): Uint8Array[];
 ```
 
 Slices s into all subslices after each instance of sep and returns a slice of those subslices.
@@ -483,7 +483,7 @@ Slices s into all subslices after each instance of sep and returns a slice of th
 ### splitAfterN
 
 ```ts
-function splitAfterN(s: Uint8Array, sep: Uint8Array, n: number): Uint8Array[]
+function splitAfterN(s: Uint8Array, sep: Uint8Array, n: number): Uint8Array[];
 ```
 
 Slices s into subslices after each instance of sep and returns a slice of those subslices.
@@ -491,7 +491,7 @@ Slices s into subslices after each instance of sep and returns a slice of those 
 ### splitN
 
 ```ts
-function splitN(s: Uint8Array, sep: Uint8Array, n: number): Uint8Array[]
+function splitN(s: Uint8Array, sep: Uint8Array, n: number): Uint8Array[];
 ```
 
 Slices s into subslices separated by sep and returns a slice of the subslices between those separators.
@@ -499,7 +499,7 @@ Slices s into subslices separated by sep and returns a slice of the subslices be
 ### toLower
 
 ```ts
-function toLower(s: Uint8Array): Uint8Array
+function toLower(s: Uint8Array): Uint8Array;
 ```
 
 Returns a copy of the byte slice s with all Unicode letters mapped to their lower case.
@@ -507,7 +507,7 @@ Returns a copy of the byte slice s with all Unicode letters mapped to their lowe
 ### toTitle
 
 ```ts
-function toTitle(s: Uint8Array): Uint8Array
+function toTitle(s: Uint8Array): Uint8Array;
 ```
 
 Returns a copy of the byte slice s with all Unicode letters mapped to their title case.
@@ -515,7 +515,7 @@ Returns a copy of the byte slice s with all Unicode letters mapped to their titl
 ### toUpper
 
 ```ts
-function toUpper(s: Uint8Array): Uint8Array
+function toUpper(s: Uint8Array): Uint8Array;
 ```
 
 Returns a copy of the byte slice s with all Unicode letters mapped to their upper case.
@@ -523,7 +523,7 @@ Returns a copy of the byte slice s with all Unicode letters mapped to their uppe
 ### toValidUTF8
 
 ```ts
-function toValidUTF8(s: Uint8Array, r: Uint8Array): Uint8Array
+function toValidUTF8(s: Uint8Array, r: Uint8Array): Uint8Array;
 ```
 
 Returns a copy of the byte slice s with each run of invalid UTF-8 byte sequences replaced by the replacement slice r.
@@ -531,7 +531,7 @@ Returns a copy of the byte slice s with each run of invalid UTF-8 byte sequences
 ### trim
 
 ```ts
-function trim(s: Uint8Array, cutset: Uint8Array): Uint8Array
+function trim(s: Uint8Array, cutset: Uint8Array): Uint8Array;
 ```
 
 Returns a subslice of s by slicing off all leading and trailing UTF-8-encoded code points contained in cutset.
@@ -539,7 +539,7 @@ Returns a subslice of s by slicing off all leading and trailing UTF-8-encoded co
 ### trimFunc
 
 ```ts
-function trimFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Array
+function trimFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Array;
 ```
 
 Returns a subslice of s by slicing off all leading and trailing Unicode code points c satisfying f(c).
@@ -547,7 +547,7 @@ Returns a subslice of s by slicing off all leading and trailing Unicode code poi
 ### trimLeft
 
 ```ts
-function trimLeft(s: Uint8Array, cutset: Uint8Array): Uint8Array
+function trimLeft(s: Uint8Array, cutset: Uint8Array): Uint8Array;
 ```
 
 Returns a subslice of s by slicing off all leading UTF-8-encoded code points contained in cutset.
@@ -555,7 +555,7 @@ Returns a subslice of s by slicing off all leading UTF-8-encoded code points con
 ### trimLeftFunc
 
 ```ts
-function trimLeftFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Array
+function trimLeftFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Array;
 ```
 
 Returns a subslice of s by slicing off all leading Unicode code points c satisfying f(c).
@@ -563,7 +563,7 @@ Returns a subslice of s by slicing off all leading Unicode code points c satisfy
 ### trimPrefix
 
 ```ts
-function trimPrefix(s: Uint8Array, prefix: Uint8Array): Uint8Array
+function trimPrefix(s: Uint8Array, prefix: Uint8Array): Uint8Array;
 ```
 
 Returns s without the provided leading prefix slice.
@@ -571,7 +571,7 @@ Returns s without the provided leading prefix slice.
 ### trimRight
 
 ```ts
-function trimRight(s: Uint8Array, cutset: Uint8Array): Uint8Array
+function trimRight(s: Uint8Array, cutset: Uint8Array): Uint8Array;
 ```
 
 Returns a subslice of s by slicing off all trailing UTF-8-encoded code points contained in cutset.
@@ -579,7 +579,7 @@ Returns a subslice of s by slicing off all trailing UTF-8-encoded code points co
 ### trimRightFunc
 
 ```ts
-function trimRightFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Array
+function trimRightFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Array;
 ```
 
 Returns a subslice of s by slicing off all trailing Unicode code points c satisfying f(c).
@@ -587,7 +587,7 @@ Returns a subslice of s by slicing off all trailing Unicode code points c satisf
 ### trimSpace
 
 ```ts
-function trimSpace(s: Uint8Array): Uint8Array
+function trimSpace(s: Uint8Array): Uint8Array;
 ```
 
 Returns a subslice of s by slicing off all leading and trailing white space, as defined by Unicode.
@@ -595,7 +595,7 @@ Returns a subslice of s by slicing off all leading and trailing white space, as 
 ### trimSuffix
 
 ```ts
-function trimSuffix(s: Uint8Array, suffix: Uint8Array): Uint8Array
+function trimSuffix(s: Uint8Array, suffix: Uint8Array): Uint8Array;
 ```
 
 Returns s without the provided ending suffix slice.

@@ -18,8 +18,8 @@ None
 
 ```ts
 class Cond {
-    waitersCount: number;
-    constructor(mutex: Mutex);
+	waitersCount: number;
+	constructor(mutex: Mutex);
 }
 ```
 
@@ -50,7 +50,7 @@ Atomically unlocks the mutex and suspends execution until awakened by Signal or 
 ### function (Cond).waitersCount
 
 ```ts
-waitersCount: number
+waitersCount: number;
 ```
 
 Gets the number of waiting operations.
@@ -59,7 +59,7 @@ Gets the number of waiting operations.
 
 ```ts
 class Mutex {
-    locked: boolean;
+	locked: boolean;
 }
 ```
 
@@ -74,7 +74,7 @@ Acquires the lock.
 ### function (Mutex).locked
 
 ```ts
-locked: boolean
+locked: boolean;
 ```
 
 Checks if the mutex is currently locked.
@@ -99,7 +99,7 @@ Releases the lock.
 
 ```ts
 class RWMutex {
-    constructor();
+	constructor();
 }
 ```
 
@@ -114,7 +114,7 @@ Acquires the write lock.
 ### function (RWMutex).readCount
 
 ```ts
-readCount: number
+readCount: number;
 ```
 
 Gets the current read count.
@@ -162,7 +162,7 @@ Releases the write lock.
 ### function (RWMutex).writeLocked
 
 ```ts
-writeLocked: boolean
+writeLocked: boolean;
 ```
 
 Checks if write locked.
@@ -171,7 +171,7 @@ Checks if write locked.
 
 ```ts
 class Semaphore {
-    constructor(permits: number);
+	constructor(permits: number);
 }
 ```
 
@@ -186,7 +186,7 @@ Acquires a permit.
 ### function (Semaphore).availablePermits
 
 ```ts
-availablePermits: number
+availablePermits: number;
 ```
 
 Gets the available permits count.
@@ -194,7 +194,7 @@ Gets the available permits count.
 ### function (Semaphore).queueLength
 
 ```ts
-queueLength: number
+queueLength: number;
 ```
 
 Gets the number of waiting operations.
@@ -219,7 +219,7 @@ Tries to acquire a permit without waiting.
 
 ```ts
 class WaitGroup {
-    constructor();
+	constructor();
 }
 ```
 
@@ -234,7 +234,7 @@ Adds delta to the .
 ### function (WaitGroup).counter
 
 ```ts
-counter: number
+counter: number;
 ```
 
 Gets the current counter value.
@@ -267,7 +267,7 @@ Waits until the counter is zero.
 
 ```ts
 class Once {
-    constructor();
+	constructor();
 }
 ```
 

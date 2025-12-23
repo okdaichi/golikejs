@@ -425,4 +425,3 @@ Deno.test("afterFunc - should return false when stop is called after execution",
 	assertEquals(stopped, false);
 	assertEquals(callbackExecuted, true);
 });
-

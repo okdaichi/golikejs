@@ -1,3 +1,20 @@
+/**
+ * Context carries cancellation signals and deadlines across API boundaries.
+ * Similar to Go's context.Context, it enables propagating cancellation and timeouts
+ * through asynchronous operation chains.
+ *
+ * @example
+ * ```ts
+ * import { context } from "@okudai/golikejs";
+ *
+ * const [ctx, cancel] = context.withCancel(context.background());
+ * try {
+ *   await doWork(ctx);
+ * } finally {
+ *   cancel();
+ * }
+ * ```
+ */
 export interface Context {
 	/**
 	 * Returns a promise that resolves when the context is finished (cancelled, timed out, etc).
@@ -10,10 +27,27 @@ export interface Context {
 	err(): Error | undefined;
 }
 
+/**
+ * CancelFunc is a function that cancels a Context.
+ * Calling a CancelFunc cancels the associated context and all derived contexts.
+ */
 export type CancelFunc = () => void;
+
+/**
+ * CancelCauseFunc is a function that cancels a Context with a specific error.
+ * Allows providing a custom error or undefined to indicate clean completion.
+ */
 export type CancelCauseFunc = (err: Error | undefined) => void;
 
+/**
+ * ContextCancelledError indicates that a Context was explicitly cancelled.
+ */
 export class ContextCancelledError extends Error {
+	/**
+	 * Creates a new ContextCancelledError.
+	 *
+	 * @param message - The error message, defaults to "Context cancelled"
+	 */
 	constructor(message = "Context cancelled") {
 		super(message);
 		this.name = "ContextCancelledError";
@@ -21,7 +55,15 @@ export class ContextCancelledError extends Error {
 	}
 }
 
+/**
+ * ContextTimeoutError indicates that a Context exceeded its deadline or timeout.
+ */
 export class ContextTimeoutError extends Error {
+	/**
+	 * Creates a new ContextTimeoutError.
+	 *
+	 * @param message - The error message, defaults to "context deadline exceeded"
+	 */
 	constructor(message = "context deadline exceeded") {
 		super(message);
 		this.name = "ContextTimeoutError";
@@ -120,15 +162,33 @@ const backgroundContext: Context = (() => {
 })();
 
 // Public API functions
+
+/**
+ * Returns a background Context that is never cancelled.
+ * Similar to Go's context.Background(), this is typically used as the root context.
+ *
+ * @returns A background Context
+ */
 export function background(): Context {
 	return backgroundContext;
 }
 
 /**
- * Watch an external AbortSignal and cancel the returned Context when the signal aborts.
- * This mirrors the behavior of the previous `withSignal` but is named to emphasize
- * that the signal is being observed rather than produced. Returns a Context derived
- * from `parent` which will be cancelled when `signal` aborts.
+ * Creates a Context that cancels when the provided AbortSignal aborts.
+ * Useful for integrating with fetch and other Web APIs that use AbortSignal.
+ *
+ * @param parent - The parent Context
+ * @param signal - The AbortSignal to watch
+ * @returns A new Context that cancels when the signal aborts
+ *
+ * @example
+ * ```ts
+ * import { context } from "@okudai/golikejs";
+ *
+ * const ac = new AbortController();
+ * const ctx = context.watchSignal(context.background(), ac.signal);
+ * ac.abort(); // cancels ctx
+ * ```
  */
 export function watchSignal(parent: Context, signal: AbortSignal): Context {
 	const context = new DefaultContext(parent);
@@ -154,11 +214,20 @@ export function watchSignal(parent: Context, signal: AbortSignal): Context {
 // (No backwards-compatible aliases — package is not yet published.)
 
 /**
- * Go-style helper: returns a new child Context and an AbortController paired to it.
- * - Aborting the returned controller will cancel the Context (with controller.reason if provided).
- * - Cancelling the Context will abort the controller's signal (with the context's error as reason when possible).
- * This provides a two-way bridge between AbortController-based APIs and this Context implementation,
- * and follows the Go idiom where a create function returns both the derived Context and a cancel handle.
+ * Creates a Context with an AbortController that are synchronized.
+ * Aborting the controller cancels the Context, and vice versa.
+ * Similar to Go's context.WithCancel, returns both the Context and a cancel mechanism.
+ *
+ * @param parent - The parent Context
+ * @returns A tuple of [Context, AbortController]
+ *
+ * @example
+ * ```ts
+ * import { context } from "@okudai/golikejs";
+ *
+ * const [ctx, ac] = context.withAbort(context.background());
+ * ac.abort(); // cancels ctx
+ * ```
  */
 export function withAbort(parent: Context): [Context, AbortController] {
 	const context = new DefaultContext(parent);
@@ -193,16 +262,55 @@ export function withAbort(parent: Context): [Context, AbortController] {
 	return [context, ac];
 }
 
+/**
+ * Creates a cancellable Context derived from parent.
+ * Similar to Go's context.WithCancel.
+ *
+ * @param parent - The parent Context
+ * @returns A tuple of [Context, CancelFunc]
+ *
+ * @example
+ * ```ts
+ * import { context } from "@okudai/golikejs";
+ *
+ * const [ctx, cancel] = context.withCancel(context.background());
+ * // ... do work
+ * cancel(); // cancels ctx
+ * ```
+ */
 export function withCancel(parent: Context): [Context, CancelFunc] {
 	const context = new DefaultContext(parent);
 	return [context, () => context.cancel(new ContextCancelledError())];
 }
 
+/**
+ * Creates a cancellable Context with a cancel function that accepts a custom error.
+ * Similar to Go's context.WithCancelCause.
+ *
+ * @param parent - The parent Context
+ * @returns A tuple of [Context, CancelCauseFunc]
+ */
 export function withCancelCause(parent: Context): [Context, CancelCauseFunc] {
 	const context = new DefaultContext(parent);
 	return [context, (err: Error | undefined) => context.cancel(err)];
 }
 
+/**
+ * Creates a Context that automatically cancels after the specified timeout.
+ * Similar to Go's context.WithTimeout.
+ *
+ * @param parent - The parent Context
+ * @param timeoutMs - The timeout in milliseconds
+ * @returns A new Context that cancels after the timeout
+ *
+ * @example
+ * ```ts
+ * import { context } from "@okudai/golikejs";
+ *
+ * const ctx = context.withTimeout(context.background(), 5000);
+ * await ctx.done(); // resolves after 5 seconds
+ * ```
+ */
 export function withTimeout(parent: Context, timeoutMs: number): Context {
 	const context = new DefaultContext(parent);
 	const id = setTimeout(() => {
@@ -212,6 +320,15 @@ export function withTimeout(parent: Context, timeoutMs: number): Context {
 	return context;
 }
 
+/**
+ * Creates a Context that completes when the provided Promise settles.
+ * Resolves with undefined on success, or with the rejection error on failure.
+ *
+ * @template T - The Promise result type
+ * @param parent - The parent Context
+ * @param promise - The Promise to watch
+ * @returns A new Context that completes with the Promise
+ */
 export function watchPromise<T>(parent: Context, promise: Promise<T>): Context {
 	const context = new DefaultContext(parent);
 	promise.then(
@@ -224,6 +341,10 @@ export function watchPromise<T>(parent: Context, promise: Promise<T>): Context {
 	return context;
 }
 
+/**
+ * AfterFuncContext is an internal Context that executes a function when its parent is cancelled.
+ * @internal
+ */
 class AfterFuncContext extends DefaultContext {
 	#fn?: () => void | Promise<void>;
 	#executed = false;
@@ -266,13 +387,45 @@ class AfterFuncContext extends DefaultContext {
 	}
 }
 
+/**
+ * Registers a function to execute when the parent Context is cancelled.
+ * Returns a stop function that can prevent the function from executing if called before cancellation.
+ * Similar to Go's context.AfterFunc.
+ *
+ * @param parent - The parent Context
+ * @param fn - The function to execute on cancellation
+ * @returns A stop function that returns true if it prevented execution, false otherwise
+ *
+ * @example
+ * ```ts
+ * import { context } from "@okudai/golikejs";
+ *
+ * const [ctx, cancel] = context.withCancel(context.background());
+ * const stop = context.afterFunc(ctx, () => console.log("cancelled"));
+ * cancel(); // prints "cancelled"
+ * ```
+ */
 export function afterFunc(parent: Context, fn: () => void | Promise<void>): () => boolean {
 	const ctx = new AfterFuncContext(parent, fn);
 
 	return () => ctx.stop();
 }
+
 /**
- * Convert a Context into an AbortSignal for integration with fetch / Web APIs.
+ * Converts a Context into an AbortSignal for integration with fetch and other Web APIs.
+ * The returned signal will abort when the Context is cancelled.
+ *
+ * @param ctx - The Context to convert
+ * @returns An AbortSignal that aborts when the Context is cancelled
+ *
+ * @example
+ * ```ts
+ * import { context } from "@okudai/golikejs";
+ *
+ * const [ctx, cancel] = context.withCancel(context.background());
+ * const signal = context.toAbortSignal(ctx);
+ * fetch("/api/data", { signal });
+ * ```
  */
 export function toAbortSignal(ctx: Context): AbortSignal {
 	const ac = new AbortController();

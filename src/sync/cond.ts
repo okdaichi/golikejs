@@ -1,9 +1,39 @@
 /**
- * Cond implements condition variables for coordinating access to shared resources
+ * @module
+ * Cond implements condition variables for coordinating access to shared resources.
  */
 
 import { Mutex } from "./mutex.ts";
 
+/**
+ * Cond implements condition variables for coordinating access to shared resources.
+ * A condition variable enables threads to wait for certain conditions to be met,
+ * similar to Go's sync.Cond.
+ *
+ * @example
+ * ```ts
+ * import { sync } from "@okudai/golikejs";
+ *
+ * const mu = new sync.Mutex();
+ * const cond = new sync.Cond(mu);
+ *
+ * // In a waiter
+ * await mu.lock();
+ * try {
+ *   await cond.wait();
+ * } finally {
+ *   mu.unlock();
+ * }
+ *
+ * // In a signaler
+ * await mu.lock();
+ * try {
+ *   cond.signal();
+ * } finally {
+ *   mu.unlock();
+ * }
+ * ```
+ */
 export class Cond {
 	#mutex: Mutex;
 	// waiters are parameterless callbacks invoked when signaled

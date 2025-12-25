@@ -7,6 +7,12 @@ import { Closer } from "./closer.ts";
  * Write must return a non-nil error if it returns n < len(p).
  */
 export interface Writer {
+	/**
+	 * Writes len(p) bytes from p to the underlying data stream.
+	 *
+	 * @param p - The buffer to write from
+	 * @returns A tuple of [bytes written, error]
+	 */
 	write(p: Uint8Array): Promise<[number, Error | undefined]>;
 }
 
@@ -15,6 +21,12 @@ export interface Writer {
  * method returns the number of bytes written and an optional error.
  */
 export interface WriterTo {
+	/**
+	 * Writes contents to w.
+	 *
+	 * @param w - The Writer to write to
+	 * @returns A tuple of [bytes written, error]
+	 */
 	writeTo(w: Writer): Promise<[number, Error | undefined]>;
 }
 

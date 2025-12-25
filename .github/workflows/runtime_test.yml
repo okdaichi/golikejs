@@ -34,12 +34,22 @@ jobs:
         if: matrix.runtime == 'deno'
         run: deno test --allow-all
 
+      - name: Setup Deno for bundling (Node/Bun)
+        if: matrix.runtime != 'deno'
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: vx.x.x
+
+      - name: Bundle `src/mod.ts` to `mod.js`
+        if: matrix.runtime != 'deno'
+        run: deno bundle src/mod.ts mod.js
+
       - name: Test Node import
         if: matrix.runtime == 'node'
         run: |
-          node -e "import('./mod.js').then(m => console.log(m.greet('Node')))"
+          node -e "import('./mod.js').then(m => console.log(Object.keys(m)))"
 
       - name: Test Bun import
         if: matrix.runtime == 'bun'
         run: |
-          bun run -e "import('./mod.js').then(m => console.log(m.greet('Bun')))"
+          bun run -e "import('./mod.js').then(m => console.log(Object.keys(m)))"

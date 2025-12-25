@@ -18,7 +18,7 @@ jobs:
         if: matrix.runtime == 'deno'
         uses: denoland/setup-deno@v2
         with:
-          deno-version: vx.x.x
+          deno-version: v2.6.0
 
       - name: Setup Node
         if: matrix.runtime == 'node'
@@ -38,11 +38,11 @@ jobs:
         if: matrix.runtime != 'deno'
         uses: denoland/setup-deno@v2
         with:
-          deno-version: vx.x.x
+          deno-version: v2.6.0
 
       - name: Bundle `src/mod.ts` to `mod.js`
         if: matrix.runtime != 'deno'
-        run: deno bundle src/mod.ts mod.js
+        run: deno bundle ./src/mod.ts mod.js
 
       - name: Test Node import
         if: matrix.runtime == 'node'

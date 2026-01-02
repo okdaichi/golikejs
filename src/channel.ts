@@ -245,7 +245,10 @@ export class Channel<T> {
 }
 
 /**
- * Select cases for channel operations
+ * ReceiveCase represents a channel receive operation in a select statement.
+ * When selected, receives a value from the channel and executes the action.
+ *
+ * @template T - The type of value to receive
  */
 export interface ReceiveCase<T = any> {
 	/** Channel to receive from */
@@ -254,19 +257,35 @@ export interface ReceiveCase<T = any> {
 	action: (value: T | undefined, ok: boolean) => void;
 }
 
+/**
+ * SendCase represents a channel send operation in a select statement.
+ * When selected, sends a value to the channel and executes the action.
+ *
+ * @template T - The type of value to send
+ */
 export interface SendCase<T = any> {
-	/** Channel and value to send */
+	/** Channel to send to */
 	channel: Channel<T>;
+	/** Value to send to the channel */
 	value: T;
 	/** Action to execute when this case is selected */
 	action: () => void;
 }
 
+/**
+ * DefaultCase represents the default branch in a select statement.
+ * Executes when no other cases are ready immediately.
+ */
 export interface DefaultCase {
 	/** Default action when no other cases are ready */
 	default: () => void;
 }
 
+/**
+ * SelectCase is a union type of all possible select cases.
+ *
+ * @template T - The type of channel values
+ */
 export type SelectCase<T = any> = ReceiveCase<T> | SendCase<T> | DefaultCase;
 
 /**
@@ -349,9 +368,22 @@ export async function select<T = any>(cases: SelectCase<T>[]): Promise<void> {
 }
 
 /**
- * Helper function to create a receive case for select()
+ * Creates a receive case for use with select().
+ * Fluent API that returns a builder with a `then` method to specify the action.
+ *
+ * @template T - The type of value to receive
+ * @param channel - The channel to receive from
+ * @returns A builder object with a `then` method
+ *
  * @example
- * receive(channel).then((value, ok) => console.log('received:', value))
+ * ```ts
+ * import { Channel, select, receive } from "@okudai/golikejs";
+ *
+ * const ch = new Channel<number>();
+ * await select([
+ *   receive(ch).then((value, ok) => console.log('received:', value))
+ * ]);
+ * ```
  */
 export function receive<T = any>(channel: Channel<T>): {
 	then(action: (value: T | undefined, ok: boolean) => void): ReceiveCase<T>;
@@ -364,9 +396,23 @@ export function receive<T = any>(channel: Channel<T>): {
 }
 
 /**
- * Helper function to create a send case for select()
+ * Creates a send case for use with select().
+ * Fluent API that returns a builder with a `then` method to specify the action.
+ *
+ * @template T - The type of value to send
+ * @param channel - The channel to send to
+ * @param value - The value to send
+ * @returns A builder object with a `then` method
+ *
  * @example
- * send(channel, value).then(() => console.log('sent'))
+ * ```ts
+ * import { Channel, select, send } from "@okudai/golikejs";
+ *
+ * const ch = new Channel<string>();
+ * await select([
+ *   send(ch, "hello").then(() => console.log('sent'))
+ * ]);
+ * ```
  */
 export function send<T = any>(channel: Channel<T>, value: T): {
 	then(action: () => void): SendCase<T>;
@@ -379,9 +425,22 @@ export function send<T = any>(channel: Channel<T>, value: T): {
 }
 
 /**
- * Helper function to create a default case for select()
+ * Creates a default case for use with select().
+ * The default case executes when no other cases are immediately ready.
+ *
+ * @param action - The function to execute when no other cases are ready
+ * @returns A DefaultCase object
+ *
  * @example
- * default_(() => console.log('no operation ready'))
+ * ```ts
+ * import { Channel, select, receive, default_ } from "@okudai/golikejs";
+ *
+ * const ch = new Channel<number>();
+ * await select([
+ *   receive(ch).then((value, ok) => console.log('received:', value)),
+ *   default_(() => console.log('no data available'))
+ * ]);
+ * ```
  */
 export function default_(action: () => void): DefaultCase {
 	return { default: action };

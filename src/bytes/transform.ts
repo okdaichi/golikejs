@@ -1,5 +1,16 @@
-// map returns a copy of the byte slice s with all its characters modified according to the mapping function.
-// If mapping returns a negative value, the character is dropped from the string with no replacement.
+/**
+ * @module
+ * Transformation functions for byte slices.
+ */
+
+/**
+ * Returns a copy of the byte slice s with all its characters modified according to the mapping function.
+ * If mapping returns a negative value, the character is dropped from the string with no replacement.
+ *
+ * @param mapping - Function that maps each rune to a new rune (or negative to drop)
+ * @param s - The byte slice to transform
+ * @returns A new byte slice with mapped characters
+ */
 export function map(mapping: (r: number) => number, s: Uint8Array): Uint8Array {
 	const str = new TextDecoder().decode(s);
 	let result = "";
@@ -12,7 +23,14 @@ export function map(mapping: (r: number) => number, s: Uint8Array): Uint8Array {
 	return new TextEncoder().encode(result);
 }
 
-// repeat returns a new byte slice consisting of count copies of b.
+/**
+ * Returns a new byte slice consisting of count copies of b.
+ *
+ * @param b - The byte slice to repeat
+ * @param count - The number of times to repeat b
+ * @returns A new byte slice with b repeated count times
+ * @throws {Error} If count is negative
+ */
 export function repeat(b: Uint8Array, count: number): Uint8Array {
 	if (count === 0) {
 		return new Uint8Array(0);
@@ -30,9 +48,17 @@ export function repeat(b: Uint8Array, count: number): Uint8Array {
 	return result;
 }
 
-// replace returns a copy of the slice s with the first n non-overlapping instances of old replaced by new.
-// If old is empty, it matches at the beginning of the slice and after each UTF-8 sequence, yielding up to k+1 replacements for a k-rune string.
-// If n < 0, there is no limit on the number of replacements.
+/**
+ * Returns a copy of the slice s with the first n non-overlapping instances of old replaced by new.
+ * If old is empty, it matches at the beginning of the slice and after each UTF-8 sequence.
+ * If n < 0, there is no limit on the number of replacements.
+ *
+ * @param s - The byte slice to search in
+ * @param old - The byte slice to replace
+ * @param new_ - The replacement byte slice
+ * @param n - Maximum number of replacements (-1 for unlimited)
+ * @returns A new byte slice with replacements made
+ */
 export function replace(s: Uint8Array, old: Uint8Array, new_: Uint8Array, n: number): Uint8Array {
 	if (old.length === 0) {
 		const str = new TextDecoder().decode(s);
@@ -64,14 +90,28 @@ export function replace(s: Uint8Array, old: Uint8Array, new_: Uint8Array, n: num
 	return concat(...parts);
 }
 
-// replaceAll returns a copy of the slice s with all non-overlapping instances of old replaced by new.
-// If old is empty, it matches at the beginning of the slice and after each UTF-8 sequence, yielding up to k+1 replacements for a k-rune string.
+/**
+ * Returns a copy of the slice s with all non-overlapping instances of old replaced by new.
+ * If old is empty, it matches at the beginning of the slice and after each UTF-8 sequence.
+ *
+ * @param s - The byte slice to search in
+ * @param old - The byte slice to replace
+ * @param new_ - The replacement byte slice
+ * @returns A new byte slice with all replacements made
+ */
 export function replaceAll(s: Uint8Array, old: Uint8Array, new_: Uint8Array): Uint8Array {
 	return replace(s, old, new_, -1);
 }
 
-// runWhile returns a subslice of s, starting at index i and extending as long as r(i) returns true for each element.
-// It panics if i is out of bounds.
+/**
+ * Returns a subslice of s, starting at index i and extending as long as r(i) returns true for each element.
+ *
+ * @param s - The byte slice to process
+ * @param i - The starting index
+ * @param r - Predicate function to test each byte
+ * @returns A subslice while the predicate is true
+ * @throws {Error} If i is out of bounds
+ */
 export function runWhile(s: Uint8Array, i: number, r: (b: number) => boolean): Uint8Array {
 	if (i < 0 || i > s.length) {
 		throw new Error("bytes: index out of bounds");
@@ -83,26 +123,47 @@ export function runWhile(s: Uint8Array, i: number, r: (b: number) => boolean): U
 	return s.subarray(i, end);
 }
 
-// toLower returns a copy of the byte slice s with all Unicode letters mapped to their lower case.
+/**
+ * Returns a copy of the byte slice s with all Unicode letters mapped to their lower case.
+ *
+ * @param s - The byte slice to convert
+ * @returns A new byte slice with lowercase letters
+ */
 export function toLower(s: Uint8Array): Uint8Array {
 	const str = new TextDecoder().decode(s);
 	return new TextEncoder().encode(str.toLowerCase());
 }
 
-// toTitle returns a copy of the byte slice s with all Unicode letters mapped to their title case.
+/**
+ * Returns a copy of the byte slice s with all Unicode letters mapped to their title case.
+ *
+ * @param s - The byte slice to convert
+ * @returns A new byte slice with uppercase letters
+ */
 export function toTitle(s: Uint8Array): Uint8Array {
 	const str = new TextDecoder().decode(s);
 	return new TextEncoder().encode(str.toUpperCase());
 }
 
-// toUpper returns a copy of the byte slice s with all Unicode letters mapped to their upper case.
+/**
+ * Returns a copy of the byte slice s with all Unicode letters mapped to their upper case.
+ *
+ * @param s - The byte slice to convert
+ * @returns A new byte slice with uppercase letters
+ */
 export function toUpper(s: Uint8Array): Uint8Array {
 	const str = new TextDecoder().decode(s);
 	return new TextEncoder().encode(str.toUpperCase());
 }
 
-// toValidUTF8 returns a copy of the byte slice s with each run of invalid UTF-8 byte sequences replaced by the replacement slice r.
-// If r is nil or empty, invalid UTF-8 byte sequences are replaced by U+FFFD.
+/**
+ * Returns a copy of the byte slice s with each run of invalid UTF-8 byte sequences replaced by the replacement slice r.
+ * If r is empty, invalid UTF-8 byte sequences are replaced by U+FFFD.
+ *
+ * @param s - The byte slice to validate
+ * @param r - The replacement byte slice for invalid sequences
+ * @returns A new byte slice with valid UTF-8
+ */
 export function toValidUTF8(s: Uint8Array, r: Uint8Array): Uint8Array {
 	const decoder = new TextDecoder("utf-8", { fatal: false });
 	const str = decoder.decode(s);

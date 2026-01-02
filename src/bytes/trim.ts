@@ -1,4 +1,15 @@
-// trim returns a subslice of s by slicing off all leading and trailing UTF-8-encoded code points contained in cutset.
+/**
+ * @module
+ * Functions for trimming byte slices.
+ */
+
+/**
+ * Returns a subslice of s by slicing off all leading and trailing UTF-8-encoded code points contained in cutset.
+ *
+ * @param s - The byte slice to trim
+ * @param cutset - Byte slice containing characters to remove
+ * @returns A trimmed byte slice
+ */
 export function trim(s: Uint8Array, cutset: Uint8Array): Uint8Array {
 	let start = 0;
 	let end = s.length;
@@ -19,7 +30,13 @@ export function trim(s: Uint8Array, cutset: Uint8Array): Uint8Array {
 	return s.subarray(start, end);
 }
 
-// trimFunc returns a subslice of s by slicing off all leading and trailing Unicode code points c satisfying f(c).
+/**
+ * Returns a subslice of s by slicing off all leading and trailing Unicode code points c satisfying f(c).
+ *
+ * @param s - The byte slice to trim
+ * @param f - Predicate function to test each code point
+ * @returns A trimmed byte slice
+ */
 export function trimFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Array {
 	const str = new TextDecoder().decode(s);
 	let start = 0;
@@ -33,7 +50,13 @@ export function trimFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Array {
 	return new TextEncoder().encode(str.slice(start, end));
 }
 
-// trimLeft returns a subslice of s by slicing off all leading UTF-8-encoded code points contained in cutset.
+/**
+ * Returns a subslice of s by slicing off all leading UTF-8-encoded code points contained in cutset.
+ *
+ * @param s - The byte slice to trim
+ * @param cutset - Byte slice containing characters to remove from the left
+ * @returns A left-trimmed byte slice
+ */
 export function trimLeft(s: Uint8Array, cutset: Uint8Array): Uint8Array {
 	let start = 0;
 	const cutsetSet = new Set(cutset);
@@ -45,7 +68,13 @@ export function trimLeft(s: Uint8Array, cutset: Uint8Array): Uint8Array {
 	return s.subarray(start);
 }
 
-// trimLeftFunc returns a subslice of s by slicing off all leading Unicode code points c satisfying f(c).
+/**
+ * Returns a subslice of s by slicing off all leading Unicode code points c satisfying f(c).
+ *
+ * @param s - The byte slice to trim
+ * @param f - Predicate function to test each code point
+ * @returns A left-trimmed byte slice
+ */
 export function trimLeftFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Array {
 	const str = new TextDecoder().decode(s);
 	let start = 0;
@@ -55,8 +84,14 @@ export function trimLeftFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Arr
 	return new TextEncoder().encode(str.slice(start));
 }
 
-// trimPrefix returns s without the provided leading prefix slice.
-// If s doesn't start with prefix, trimPrefix returns s unchanged.
+/**
+ * Returns s without the provided leading prefix slice.
+ * If s doesn't start with prefix, returns s unchanged.
+ *
+ * @param s - The byte slice to trim
+ * @param prefix - The prefix to remove
+ * @returns A byte slice without the prefix
+ */
 export function trimPrefix(s: Uint8Array, prefix: Uint8Array): Uint8Array {
 	if (hasPrefix(s, prefix)) {
 		return s.subarray(prefix.length);
@@ -64,7 +99,13 @@ export function trimPrefix(s: Uint8Array, prefix: Uint8Array): Uint8Array {
 	return s;
 }
 
-// trimRight returns a subslice of s by slicing off all trailing UTF-8-encoded code points contained in cutset.
+/**
+ * Returns a subslice of s by slicing off all trailing UTF-8-encoded code points contained in cutset.
+ *
+ * @param s - The byte slice to trim
+ * @param cutset - Byte slice containing characters to remove from the right
+ * @returns A right-trimmed byte slice
+ */
 export function trimRight(s: Uint8Array, cutset: Uint8Array): Uint8Array {
 	let end = s.length;
 	const cutsetSet = new Set(cutset);
@@ -76,7 +117,13 @@ export function trimRight(s: Uint8Array, cutset: Uint8Array): Uint8Array {
 	return s.subarray(0, end);
 }
 
-// trimRightFunc returns a subslice of s by slicing off all trailing Unicode code points c satisfying f(c).
+/**
+ * Returns a subslice of s by slicing off all trailing Unicode code points c satisfying f(c).
+ *
+ * @param s - The byte slice to trim
+ * @param f - Predicate function to test each code point
+ * @returns A right-trimmed byte slice
+ */
 export function trimRightFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Array {
 	const str = new TextDecoder().decode(s);
 	let end = str.length;
@@ -86,15 +133,26 @@ export function trimRightFunc(s: Uint8Array, f: (r: number) => boolean): Uint8Ar
 	return new TextEncoder().encode(str.slice(0, end));
 }
 
-// trimSpace returns a subslice of s by slicing off all leading and trailing white space, as defined by Unicode.
+/**
+ * Returns a subslice of s by slicing off all leading and trailing white space, as defined by Unicode.
+ *
+ * @param s - The byte slice to trim
+ * @returns A byte slice with whitespace removed from both ends
+ */
 export function trimSpace(s: Uint8Array): Uint8Array {
 	const str = new TextDecoder().decode(s);
 	const trimmed = str.trim();
 	return new TextEncoder().encode(trimmed);
 }
 
-// trimSuffix returns s without the provided ending suffix slice.
-// If s doesn't end with suffix, trimSuffix returns s unchanged.
+/**
+ * Returns s without the provided ending suffix slice.
+ * If s doesn't end with suffix, returns s unchanged.
+ *
+ * @param s - The byte slice to trim
+ * @param suffix - The suffix to remove
+ * @returns A byte slice without the suffix
+ */
 export function trimSuffix(s: Uint8Array, suffix: Uint8Array): Uint8Array {
 	if (hasSuffix(s, suffix)) {
 		return s.subarray(0, s.length - suffix.length);

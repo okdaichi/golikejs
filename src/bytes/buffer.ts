@@ -1,16 +1,49 @@
+/**
+ * @module
+ * Buffer provides an in-memory byte buffer that implements Reader and Writer interfaces.
+ */
+
 import { EOFError } from "../io/error.ts";
 import { Reader } from "../io/reader.ts";
 import { Writer } from "../io/writer.ts";
 
+// Re-export io types that Buffer implements
+export type { Reader, Writer };
+
+/**
+ * MinRead is the minimum read size for Buffer.readFrom operations.
+ */
 export const MinRead = 512;
 
+/**
+ * TooLargeError indicates that a buffer operation would exceed the maximum buffer size.
+ */
 export class TooLargeError extends Error {
+	/**
+	 * Creates a new TooLargeError.
+	 *
+	 * @param message - The error message, defaults to "bytes buffer: too large"
+	 */
 	constructor(message = "bytes buffer: too large") {
 		super(message);
 		this.name = "TooLargeError";
 	}
 }
 
+/**
+ * Buffer is an in-memory byte buffer that implements Reader and Writer interfaces.
+ * Similar to Go's bytes.Buffer, it provides efficient read and write operations
+ * with automatic growth and UTF-8 rune handling.
+ *
+ * @example
+ * ```ts
+ * import { bytes } from "@okudai/golikejs";
+ *
+ * const buf = bytes.Buffer.make(128);
+ * await buf.write(new TextEncoder().encode("hello"));
+ * const data = buf.bytes();
+ * ```
+ */
 export class Buffer implements Reader, Writer {
 	#buf: Uint8Array;
 	#off: number; // read offset
@@ -18,6 +51,11 @@ export class Buffer implements Reader, Writer {
 	#lastReadOp: "byte" | "rune" | "read" | null;
 	#lastReadSize: number;
 
+	/**
+	 * Creates a new Buffer backed by the given memory.
+	 *
+	 * @param memory - The ArrayBufferLike to use as backing storage
+	 */
 	constructor(memory: ArrayBufferLike) {
 		this.#buf = new Uint8Array(memory);
 		this.#off = 0;
@@ -26,41 +64,85 @@ export class Buffer implements Reader, Writer {
 		this.#lastReadSize = 0;
 	}
 
+	/**
+	 * Creates a new Buffer with the specified capacity.
+	 *
+	 * @param capacity - The initial capacity in bytes
+	 * @returns A new Buffer instance
+	 */
 	static make(capacity: number): Buffer {
 		const buf = new Uint8Array(capacity);
 		return new Buffer(buf.buffer);
 	}
 
+	/**
+	 * Returns a view of the unread portion of the buffer.
+	 *
+	 * @returns A Uint8Array view of the unread data
+	 */
 	bytes(): Uint8Array {
 		return this.#buf.subarray(this.#off, this.#len);
 	}
 
+	/**
+	 * Returns the number of unread bytes in the buffer.
+	 */
 	get size(): number {
 		return this.#len - this.#off;
 	}
 
+	/**
+	 * Returns the buffer's capacity.
+	 */
 	get capacity(): number {
 		return this.#buf.length;
 	}
 
-	// Len and Cap helpers (Go-like names)
+	/**
+	 * Returns the number of unread bytes (Go-style method name).
+	 *
+	 * @returns The number of unread bytes
+	 */
 	len(): number {
 		return this.size;
 	}
 
+	/**
+	 * Returns the buffer's capacity (Go-style method name).
+	 *
+	 * @returns The buffer capacity
+	 */
 	cap(): number {
 		return this.capacity;
 	}
 
+	/**
+	 * Converts the unread portion of the buffer to a UTF-8 string.
+	 *
+	 * @returns A string decoded from the unread bytes
+	 */
 	toString(): string {
 		return new TextDecoder().decode(this.bytes());
 	}
 
+	/**
+	 * Writes a UTF-8 encoded string to the buffer.
+	 *
+	 * @param s - The string to write
+	 * @returns A tuple of [bytes written, error]
+	 */
 	async writeString(s: string): Promise<[number, Error | undefined]> {
 		const data = new TextEncoder().encode(s);
 		return await this.write(data);
 	}
 
+	/**
+	 * Returns the next n bytes from the buffer and advances the read position.
+	 *
+	 * @param n - The number of bytes to return
+	 * @returns A Uint8Array containing the next n bytes (or fewer if EOF)
+	 * @throws {Error} If n is negative
+	 */
 	next(n: number): Uint8Array {
 		if (n < 0) throw new Error("bytes buffer: negative next length");
 		const avail = this.size;
@@ -73,6 +155,12 @@ export class Buffer implements Reader, Writer {
 		return res;
 	}
 
+	/**
+	 * Discards all but the first n unread bytes from the buffer.
+	 *
+	 * @param n - The number of bytes to keep
+	 * @throws {Error} If n is negative or greater than buffer size
+	 */
 	truncate(n: number) {
 		if (n < 0 || n > this.size) {
 			throw new Error("bytes buffer: truncate out of range");
@@ -81,6 +169,11 @@ export class Buffer implements Reader, Writer {
 		// if (this.#off === this.#len) this.reset();
 	}
 
+	/**
+	 * Unreads the last byte read by readByte.
+	 *
+	 * @returns An error if the last operation was not readByte, undefined otherwise
+	 */
 	unreadByte(): Error | undefined {
 		if (this.#lastReadOp !== "byte" || this.#lastReadSize !== 1) {
 			return new Error("bytes buffer: cannot unread byte");
@@ -198,6 +291,11 @@ export class Buffer implements Reader, Writer {
 		return [code, size, undefined];
 	}
 
+	/**
+	 * Unreads the last rune read by readRune.
+	 *
+	 * @returns An error if the last operation was not readRune, undefined otherwise
+	 */
 	unreadRune(): Error | undefined {
 		if (this.#lastReadOp !== "rune" || this.#lastReadSize <= 0) {
 			return new Error("bytes buffer: cannot unread rune");
@@ -261,17 +359,33 @@ export class Buffer implements Reader, Writer {
 		return [new TextDecoder().decode(b), undefined];
 	}
 
+	/**
+	 * Writes a single Unicode code point to the buffer.
+	 *
+	 * @param r - The Unicode code point to write
+	 * @returns A tuple of [bytes written, error]
+	 */
 	async writeRune(r: number): Promise<[number, Error | undefined]> {
 		const s = String.fromCodePoint(r);
 		const data = new TextEncoder().encode(s);
 		return await this.write(data);
 	}
 
+	/**
+	 * Resets the buffer to be empty.
+	 */
 	reset() {
 		this.#off = 0;
 		this.#len = 0;
 	}
 
+	/**
+	 * Reads data into the provided buffer.
+	 * Implements the Reader interface.
+	 *
+	 * @param buf - The buffer to read into
+	 * @returns A tuple of [bytes read, error]
+	 */
 	async read(buf: Uint8Array): Promise<[number, Error | undefined]> {
 		const bytesAvailable = this.size;
 		const bytesToRead = Math.min(buf.length, bytesAvailable);
@@ -288,6 +402,11 @@ export class Buffer implements Reader, Writer {
 		return [bytesToRead, undefined];
 	}
 
+	/**
+	 * Reads and returns the next byte from the buffer.
+	 *
+	 * @returns A tuple of [byte value, error]
+	 */
 	readByte(): [number, Error | undefined] {
 		if (this.size < 1) {
 			return [0, new EOFError()];
@@ -302,6 +421,13 @@ export class Buffer implements Reader, Writer {
 		return [value, undefined];
 	}
 
+	/**
+	 * Writes data to the buffer.
+	 * Implements the Writer interface.
+	 *
+	 * @param data - The data to write
+	 * @returns A tuple of [bytes written, error]
+	 */
 	async write(data: Uint8Array): Promise<[number, Error | undefined]> {
 		this.grow(data.length);
 		this.#buf.set(data, this.#len);
@@ -311,6 +437,12 @@ export class Buffer implements Reader, Writer {
 		this.#lastReadSize = 0;
 		return [data.length, undefined];
 	}
+
+	/**
+	 * Writes a single byte to the buffer.
+	 *
+	 * @param value - The byte value to write
+	 */
 	writeByte(value: number): void {
 		this.grow(1);
 		this.#buf[this.#len] = value;
@@ -319,6 +451,12 @@ export class Buffer implements Reader, Writer {
 		this.#lastReadSize = 0;
 	}
 
+	/**
+	 * Grows the buffer to guarantee space for n more bytes.
+	 *
+	 * @param n - The number of additional bytes needed
+	 * @throws {Error} If n is negative
+	 */
 	grow(n: number) {
 		if (n < 0) {
 			throw new Error("Cannot grow buffer by a negative size");

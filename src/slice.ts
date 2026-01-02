@@ -1,7 +1,13 @@
-// A minimal Go-like slice implementation for JS/TS.
-// Supports backing by plain Array<T> or by TypedArray constructors (Uint8Array, etc.).
+/**
+ * @module
+ * A minimal Go-like slice implementation for JS/TS.
+ * Supports backing by plain Array<T> or by TypedArray constructors (Uint8Array, etc.).
+ */
 
-type TypedArray =
+/**
+ * TypedArray represents all JavaScript typed array types.
+ */
+export type TypedArray =
 	| Uint8Array
 	| Int8Array
 	| Uint16Array
@@ -10,15 +16,61 @@ type TypedArray =
 	| Int32Array
 	| Float32Array
 	| Float64Array;
-type TypedArrayConstructor = { new (length: number): TypedArray; BYTES_PER_ELEMENT?: number };
 
+/**
+ * TypedArrayConstructor represents constructors for typed arrays.
+ */
+export type TypedArrayConstructor = { new (length: number): TypedArray; BYTES_PER_ELEMENT?: number };
+
+/**
+ * Slice implements a Go-like slice with support for plain arrays and typed arrays.
+ * Similar to Go slices, a Slice is a view into an underlying array with length and capacity.
+ *
+ * @template T - The type of elements in the slice
+ *
+ * @example
+ * ```ts
+ * import { Slice, make } from "@okudai/golikejs";
+ *
+ * const s = make(Array, 5, 10);
+ * s.set(0, "hello");
+ * const value = s.get(0);
+ * ```
+ */
 export class Slice<T> implements Iterable<T> {
+	/**
+	 * The underlying array storage (Array<T> or TypedArray).
+	 */
 	backing: any; // Array<T> or TypedArray
+
+	/**
+	 * The typed array constructor, present for typed array slices.
+	 */
 	ctor?: TypedArrayConstructor; // present for typed arrays
+
+	/**
+	 * The starting index in the backing array.
+	 */
 	start: number;
+
+	/**
+	 * The length of the slice.
+	 */
 	len: number;
+
+	/**
+	 * The capacity of the slice.
+	 */
 	cap: number;
 
+	/**
+	 * Creates a new Slice instance.
+	 *
+	 * @param backing - The underlying array storage
+	 * @param start - Starting index in the backing array
+	 * @param len - Length of the slice
+	 * @param cap - Capacity of the slice
+	 */
 	constructor(backing: any, start: number, len: number, cap: number) {
 		this.backing = backing;
 		this.start = start;
@@ -34,18 +86,39 @@ export class Slice<T> implements Iterable<T> {
 		}
 	}
 
-	// index access
+	/**
+	 * Gets the element at the specified index.
+	 *
+	 * @param i - The index to access
+	 * @returns The element at index i
+	 * @throws {RangeError} If index is out of range
+	 */
 	get(i: number): T {
 		if (i < 0 || i >= this.len) throw new RangeError("index out of range");
 		return this.backing[this.start + i];
 	}
 
+	/**
+	 * Sets the element at the specified index.
+	 *
+	 * @param i - The index to set
+	 * @param v - The value to set
+	 * @throws {RangeError} If index is out of range
+	 */
 	set(i: number, v: T): void {
 		if (i < 0 || i >= this.len) throw new RangeError("index out of range");
 		this.backing[this.start + i] = v;
 	}
 
-	// slice returns a new Slice that shares the same backing (like Go)
+	/**
+	 * Returns a new Slice that shares the same backing array.
+	 * Similar to Go's slice operation, the new slice is a view into the same underlying data.
+	 *
+	 * @param a - Start index (inclusive), defaults to 0
+	 * @param b - End index (exclusive), defaults to slice length
+	 * @returns A new Slice sharing the same backing array
+	 * @throws {RangeError} If indices are out of range
+	 */
 	slice(a = 0, b?: number): Slice<T> {
 		if (a < 0) throw new RangeError("slice start out of range");
 		const bb = b === undefined ? this.len : b;
@@ -56,7 +129,12 @@ export class Slice<T> implements Iterable<T> {
 		return new Slice<T>(this.backing, newStart, newLen, newCap);
 	}
 
-	// convert to a standard JS array or typed-array view of the current length
+	/**
+	 * Converts the slice to a standard JavaScript array or typed array view.
+	 * For typed arrays, returns a subarray view. For regular arrays, returns a copy.
+	 *
+	 * @returns A JavaScript array or typed array containing the slice elements
+	 */
 	toArray(): T[] | TypedArray {
 		if (this.ctor) {
 			// typed array: return subarray view
@@ -65,6 +143,12 @@ export class Slice<T> implements Iterable<T> {
 		return this.backing.slice(this.start, this.start + this.len);
 	}
 
+	/**
+	 * Returns an iterator for the slice elements.
+	 * Enables use of for...of loops and other iterable protocols.
+	 *
+	 * @returns An iterator over the slice elements
+	 */
 	[Symbol.iterator](): Iterator<T> {
 		let i = 0;
 		return {
@@ -80,12 +164,30 @@ export class Slice<T> implements Iterable<T> {
 	}
 }
 
-// make function: emulate Go's make for slices and for typed arrays when a constructor is provided.
-// Usage patterns implemented:
-// - make(Array, len, cap?) -> Slice<T>
-// - make(Uint8Array, len, cap?) -> Slice<number> backed by Uint8Array
-// - make(Map, initialCapacity?) -> Map
-// Notes: Channels are not implemented here.
+/**
+ * Creates a new slice or map, similar to Go's make builtin.
+ * Supports creating slices backed by arrays or typed arrays, and creating maps.
+ *
+ * @template T - The element type
+ * @param ctor - The constructor (Array, TypedArray constructor, or Map)
+ * @param length - The initial length (for maps, this is ignored)
+ * @param capacity - The capacity (defaults to length)
+ * @returns A new Slice or Map
+ *
+ * @example
+ * ```ts
+ * import { make } from "@okudai/golikejs";
+ *
+ * // Create a slice of length 5, capacity 10
+ * const s = make(Array, 5, 10);
+ *
+ * // Create a typed array slice
+ * const bytes = make(Uint8Array, 100);
+ *
+ * // Create a map
+ * const m = make(Map, 0);
+ * ```
+ */
 export function make<T>(ctor: any, length: number, capacity?: number): Slice<T> | Map<any, any> {
 	if (ctor === Map) {
 		// initialCapacity is ignored for JS Map
@@ -116,7 +218,23 @@ export function make<T>(ctor: any, length: number, capacity?: number): Slice<T> 
 	return new Slice<T>(backing, 0, length, cap);
 }
 
-// append function: emulate Go's append(slice, ...elements)
+/**
+ * Appends elements to a slice and returns the resulting slice.
+ * Similar to Go's append builtin, may reallocate if capacity is exceeded.
+ *
+ * @template T - The element type
+ * @param s - The slice to append to
+ * @param items - The elements to append
+ * @returns A new Slice containing the original elements plus the appended items
+ *
+ * @example
+ * ```ts
+ * import { make, append } from "@okudai/golikejs";
+ *
+ * let s = make(Array, 0, 5);
+ * s = append(s, 1, 2, 3);
+ * ```
+ */
 export function append<T>(s: Slice<T>, ...items: T[]): Slice<T> {
 	const need = s.len + items.length;
 	if (need > s.cap) {

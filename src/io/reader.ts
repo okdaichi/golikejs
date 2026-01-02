@@ -9,6 +9,12 @@ import { Closer } from "./closer.ts";
  * When Read encounters an end-of-file condition, it returns n, EOF.
  */
 export interface Reader {
+	/**
+	 * Reads up to len(p) bytes into p.
+	 *
+	 * @param p - The buffer to read into
+	 * @returns A tuple of [bytes read, error]
+	 */
 	read(p: Uint8Array): Promise<[number, Error | undefined]>;
 }
 
@@ -18,6 +24,12 @@ export interface Reader {
  * optional error.
  */
 export interface ReaderFrom {
+	/**
+	 * Reads from r until EOF and appends to the buffer.
+	 *
+	 * @param r - The Reader to read from
+	 * @returns A tuple of [bytes read, error]
+	 */
 	readFrom(r: Reader): Promise<[number, Error | undefined]>;
 }
 

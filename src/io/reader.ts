@@ -9,7 +9,7 @@ import { Closer } from "./closer.ts";
  * When Read encounters an end-of-file condition, it returns n, EOF.
  */
 export interface Reader {
-	read(p: Uint8Array): Promise<[number, Error | undefined]>;
+	read(p: Uint8Array): [number, Error | undefined] | Promise<[number, Error | undefined]>;
 }
 
 /**
@@ -18,12 +18,10 @@ export interface Reader {
  * optional error.
  */
 export interface ReaderFrom {
-	readFrom(r: Reader): Promise<[number, Error | undefined]>;
+	readFrom(r: Reader): [number, Error | undefined] | Promise<[number, Error | undefined]>;
 }
 
 /**
  * ReadCloser is the interface that groups the basic Read and Close methods.
  */
 export interface ReadCloser extends Reader, Closer {}
-
-export type { Closer };

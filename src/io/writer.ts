@@ -7,7 +7,7 @@ import { Closer } from "./closer.ts";
  * Write must return a non-nil error if it returns n < len(p).
  */
 export interface Writer {
-	write(p: Uint8Array): Promise<[number, Error | undefined]>;
+	write(p: Uint8Array): [number, Error | undefined] | Promise<[number, Error | undefined]>;
 }
 
 /**
@@ -15,12 +15,10 @@ export interface Writer {
  * method returns the number of bytes written and an optional error.
  */
 export interface WriterTo {
-	writeTo(w: Writer): Promise<[number, Error | undefined]>;
+	writeTo(w: Writer): [number, Error | undefined] | Promise<[number, Error | undefined]>;
 }
 
 /**
  * WriteCloser is the interface that groups the basic Write and Close methods.
  */
 export interface WriteCloser extends Writer, Closer {}
-
-export type { Closer };

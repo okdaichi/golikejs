@@ -3,6 +3,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+[![JSR](https://jsr.io/badges/@okdaichi/golikejs)](https://jsr.io/@okdaichi/golikejs)
+
 > Reimplementation of Go's concurrency and utility primitives for JavaScript and TypeScript runtimes.
 
 **golikejs** is a library that brings familiar Go designs to JavaScript and TypeScript.

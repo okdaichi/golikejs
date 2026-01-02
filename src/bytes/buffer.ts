@@ -56,9 +56,9 @@ export class Buffer implements Reader, Writer {
 		return new TextDecoder().decode(this.bytes());
 	}
 
-	async writeString(s: string): Promise<[number, Error | undefined]> {
+	writeString(s: string): [number, Error | undefined] {
 		const data = new TextEncoder().encode(s);
-		return await this.write(data);
+		return this.write(data);
 	}
 
 	next(n: number): Uint8Array {
@@ -272,7 +272,7 @@ export class Buffer implements Reader, Writer {
 		this.#len = 0;
 	}
 
-	async read(buf: Uint8Array): Promise<[number, Error | undefined]> {
+	read(buf: Uint8Array): [number, Error | undefined] {
 		const bytesAvailable = this.size;
 		const bytesToRead = Math.min(buf.length, bytesAvailable);
 		if (bytesToRead === 0) {
@@ -302,7 +302,7 @@ export class Buffer implements Reader, Writer {
 		return [value, undefined];
 	}
 
-	async write(data: Uint8Array): Promise<[number, Error | undefined]> {
+	write(data: Uint8Array): [number, Error | undefined] {
 		this.grow(data.length);
 		this.#buf.set(data, this.#len);
 		this.#len += data.length;
@@ -346,15 +346,17 @@ export class Buffer implements Reader, Writer {
 	async readFrom(r: Reader): Promise<[number, Error | undefined]> {
 		// Fast path: if the source implements WriterTo (i.e., can write itself to our Writer), delegate.
 		if ((r as any).writeTo instanceof Function) {
-			return await (r as any).writeTo(this as any);
+			const result = (r as any).writeTo(this as any);
+			return result instanceof Promise ? await result : result;
 		}
 		let total = 0;
 		const tmp = new Uint8Array(MinRead);
 		while (true) {
-			const [n, err] = await r.read(tmp);
+			const readResult = r.read(tmp);
+			const [n, err] = readResult instanceof Promise ? await readResult : readResult;
 			if (n > 0) {
 				const slice = tmp.subarray(0, n);
-				await this.write(slice);
+				this.write(slice);
 				total += n;
 			}
 			if (err instanceof EOFError) {
@@ -373,12 +375,14 @@ export class Buffer implements Reader, Writer {
 	async writeTo(w: Writer): Promise<[number, Error | undefined]> {
 		// Fast path: if the destination implements ReaderFrom, delegate to it.
 		if ((w as any).readFrom instanceof Function) {
-			return await (w as any).readFrom(this as any);
+			const result = (w as any).readFrom(this as any);
+			return result instanceof Promise ? await result : result;
 		}
 		let total = 0;
 		while (this.size > 0) {
 			const chunk = this.bytes();
-			const [n, err] = await w.write(chunk);
+			const writeResult = w.write(chunk);
+			const [n, err] = writeResult instanceof Promise ? await writeResult : writeResult;
 			if (n > 0) {
 				this.#off += n;
 				total += n;

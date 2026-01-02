@@ -87,7 +87,7 @@ Returns the next n bytes from the buffer without advancing the read position.
 ### function (Buffer).read
 
 ```ts
-read(buf: Uint8Array): Promise<[number, Error | undefined]>
+read(buf: Uint8Array): [number, Error | undefined]
 ```
 
 Reads up to buf.length bytes into buf.
@@ -183,7 +183,7 @@ Unreads the last rune returned by the most recent successful read operation that
 ### function (Buffer).write
 
 ```ts
-write(data: Uint8Array): Promise<[number, Error | undefined]>
+write(data: Uint8Array): [number, Error | undefined]
 ```
 
 Writes data to the buffer, growing the buffer as needed.
@@ -207,7 +207,7 @@ Writes a single UTF-8 encoded Unicode code point to the buffer.
 ### function (Buffer).writeString
 
 ```ts
-writeString(s: string): Promise<[number, Error | undefined]>
+writeString(s: string): [number, Error | undefined]
 ```
 
 Writes a string to the buffer.

@@ -34,7 +34,7 @@ class EOFError extends Error {
 
 ```ts
 interface Reader {
-	read(p: Uint8Array): Promise<[number, Error | undefined]>;
+	read(p: Uint8Array): [number, Error | undefined] | Promise<[number, Error | undefined]>;
 }
 ```
 
@@ -42,7 +42,7 @@ interface Reader {
 
 ```ts
 interface ReaderFrom {
-	readFrom(r: Reader): Promise<[number, Error | undefined]>;
+	readFrom(r: Reader): [number, Error | undefined] | Promise<[number, Error | undefined]>;
 }
 ```
 
@@ -56,7 +56,7 @@ interface ReadCloser extends Reader, Closer
 
 ```ts
 interface Writer {
-	write(p: Uint8Array): Promise<[number, Error | undefined]>;
+	write(p: Uint8Array): [number, Error | undefined] | Promise<[number, Error | undefined]>;
 }
 ```
 
@@ -64,7 +64,7 @@ interface Writer {
 
 ```ts
 interface WriterTo {
-	writeTo(w: Writer): Promise<[number, Error | undefined]>;
+	writeTo(w: Writer): [number, Error | undefined] | Promise<[number, Error | undefined]>;
 }
 ```
 

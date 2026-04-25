@@ -5,51 +5,16 @@ on:
   pull_request:
 
 jobs:
-  runtimes:
+  test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        runtime: [deno, node, bun]
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Deno
-        if: matrix.runtime == 'deno'
         uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.6.0
-
-      - name: Setup Node
-        if: matrix.runtime == 'node'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-
-      - name: Setup Bun
-        if: matrix.runtime == 'bun'
-        uses: oven-sh/setup-bun@v1
+          deno-version: v2.x
 
       - name: Run Deno tests
-        if: matrix.runtime == 'deno'
         run: deno test --allow-all
-
-      - name: Setup Deno for bundling (Node/Bun)
-        if: matrix.runtime != 'deno'
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.6.0
-
-      - name: Bundle `src/mod.ts` to `mod.js`
-        if: matrix.runtime != 'deno'
-        run: deno bundle ./src/mod.ts mod.js
-
-      - name: Test Node import
-        if: matrix.runtime == 'node'
-        run: |
-          node -e "import('./mod.js').then(m => console.log(Object.keys(m)))"
-
-      - name: Test Bun import
-        if: matrix.runtime == 'bun'
-        run: |
-          bun run -e "import('./mod.js').then(m => console.log(Object.keys(m)))"

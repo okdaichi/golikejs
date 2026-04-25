@@ -7,7 +7,8 @@
     "./sync": "./src/sync/mod.ts",
     "./context": "./src/context/mod.ts",
     "./bytes": "./src/bytes/mod.ts",
-    "./io": "./src/io/mod.ts"
+    "./io": "./src/io/mod.ts",
+    "./log/slog": "./src/log/slog/mod.ts"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert"

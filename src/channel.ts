@@ -1,8 +1,15 @@
 /**
- * Channel provides Go-style channels for communication between async operations
+ * Channel provides Go-style channels for communication between async operations.
+ * It supports both unbuffered and buffered channels.
+ * 
+ * @example
+ * ```ts
+ * const ch = new Channel<number>(1);
+ * await ch.send(42);
+ * const [val, ok] = await ch.receive();
+ * ```
  */
-
-export class Channel<T> {
+export class Channel<T> implements AsyncIterable<T> {
 	// ring buffer storage when capacity > 0
 	#buffer: (T | undefined)[] | null = null;
 	#capacity: number;
@@ -10,8 +17,16 @@ export class Channel<T> {
 	#tail = 0; // index of next write
 	#count = 0; // number of items in buffer
 	#closed = false;
-	#sendWaiters: Array<{ value: T; resolve: () => void }> = [];
-	#receiveWaiters: Array<{ resolve: (value: [T, true] | [undefined, false]) => void }> = [];
+	#sendWaiters: Array<{ 
+		value: T; 
+		resolve: () => void; 
+		reject: (err: any) => void;
+		isActive?: () => boolean;
+	}> = [];
+	#receiveWaiters: Array<{ 
+		resolve: (value: [T, true] | [undefined, false]) => void;
+		isActive?: () => boolean;
+	}> = [];
 
 	/**
 	 * Create a channel with the given capacity.
@@ -26,43 +41,85 @@ export class Channel<T> {
 	}
 
 	/**
+	 * Create a channel from an iterable or async iterable.
+	 * The channel is closed once the iterable is exhausted.
+	 * 
+	 * @example
+	 * ```ts
+	 * const ch = Chan.from([1, 2, 3]);
+	 * for await (const val of ch) {
+	 *   console.log(val);
+	 * }
+	 * ```
+	 */
+	static from<T>(iterable: Iterable<T> | AsyncIterable<T>, capacity = 0): Channel<T> {
+		const ch = new Channel<T>(capacity);
+		(async () => {
+			try {
+				for await (const val of iterable) {
+					await ch.send(val);
+				}
+			} catch (_) {
+				// Ignore errors in background sender
+			} finally {
+				ch.close();
+			}
+		})();
+		return ch;
+	}
+
+	/**
+	 * [Symbol.asyncIterator] allows using the channel in a for await...of loop.
+	 * The loop continues until the channel is closed and all buffered values are received.
+	 * 
+	 * @example
+	 * ```ts
+	 * for await (const val of ch) {
+	 *   console.log(val);
+	 * }
+	 * ```
+	 */
+	async *[Symbol.asyncIterator](): AsyncIterator<T> {
+		while (true) {
+			const [value, ok] = await this.receive();
+			if (!ok) {
+				break;
+			}
+			yield value as T;
+		}
+	}
+
+	/**
 	 * Send a value to the channel. For buffered channels, this may block if the buffer is full.
 	 * For unbuffered channels, this blocks until a receiver is ready.
+	 * 
+	 * @param value The value to send
+	 * @param options Options including AbortSignal and internal isActive check
 	 */
-	async send(value: T): Promise<void> {
+	async send(
+		value: T,
+		{ signal, isActive }: { signal?: AbortSignal; isActive?: () => boolean } = {},
+	): Promise<void> {
 		if (this.#closed) {
 			throw new Error("Channel: send on closed channel");
 		}
 
-		// If there's a waiting receiver, send directly
-		if (this.#receiveWaiters.length > 0) {
-			const waiter = this.#receiveWaiters.shift();
-			if (waiter) {
-				waiter.resolve([value, true]);
-				return;
-			}
+		if (signal?.aborted) {
+			throw signal.reason;
 		}
+
 		// If there's a waiting receiver, send directly
-		if (this.#receiveWaiters.length > 0) {
-			const waiter = this.#receiveWaiters.shift();
-			if (waiter) {
-				waiter.resolve([value, true]);
-				return;
+		while (this.#receiveWaiters.length > 0) {
+			const waiter = this.#receiveWaiters.shift()!;
+			if (waiter.isActive && !waiter.isActive()) {
+				continue;
 			}
+			waiter.resolve([value, true]);
+			return;
 		}
 
 		// If buffered and buffer has space, add to buffer
 		if (this.#capacity > 0 && this.#count < this.#capacity) {
-			// write at tail
-			const buf = this.#buffer!;
-			buf[this.#tail] = value;
-			this.#tail = (this.#tail + 1) % this.#capacity;
-			this.#count++;
-			return;
-		}
-		// If buffered and buffer has space, add to buffer
-		if (this.#capacity > 0 && this.#count < this.#capacity) {
-			// write at tail
 			const buf = this.#buffer!;
 			buf[this.#tail] = value;
 			this.#tail = (this.#tail + 1) % this.#capacity;
@@ -71,15 +128,32 @@ export class Channel<T> {
 		}
 
 		// Otherwise, wait for a receiver
-		return new Promise<void>((resolve) => {
-			this.#sendWaiters.push({ value, resolve });
+		return new Promise<void>((resolve, reject) => {
+			const waiter = { value, resolve, reject, isActive };
+			this.#sendWaiters.push(waiter);
+
+			signal?.addEventListener("abort", () => {
+				const idx = this.#sendWaiters.indexOf(waiter);
+				if (idx !== -1) {
+					this.#sendWaiters.splice(idx, 1);
+					reject(signal.reason);
+				}
+			}, { once: true });
 		});
 	}
 
 	/**
 	 * Receive a value from the channel. Returns [value, true] if successful, or [undefined, false] if the channel is closed.
+	 * 
+	 * @param options Options including AbortSignal and internal isActive check
 	 */
-	async receive(): Promise<[T, true] | [undefined, false]> {
+	async receive(
+		{ signal, isActive }: { signal?: AbortSignal; isActive?: () => boolean } = {},
+	): Promise<[T, true] | [undefined, false]> {
+		if (signal?.aborted) {
+			throw signal.reason;
+		}
+
 		// If buffer has values, take from ring buffer
 		if (this.#count > 0) {
 			const buf = this.#buffer!;
@@ -92,26 +166,33 @@ export class Channel<T> {
 		}
 
 		// If there's a waiting sender, receive directly
-		if (this.#sendWaiters.length > 0) {
-			const waiter = this.#sendWaiters.shift();
-			if (waiter) {
-				waiter.resolve();
-				return [waiter.value, true];
+		while (this.#sendWaiters.length > 0) {
+			const waiter = this.#sendWaiters.shift()!;
+			if (waiter.isActive && !waiter.isActive()) {
+				continue;
 			}
+			const val = waiter.value;
+			waiter.resolve();
+			return [val, true];
 		}
 
-		// If channel is closed and no values, return closed signal
-		if (this.#closed) {
-			return [undefined, false];
-		}
 		// If channel is closed and no values, return closed signal
 		if (this.#closed) {
 			return [undefined, false];
 		}
 
 		// Otherwise, wait for a sender
-		return new Promise<[T, true] | [undefined, false]>((resolve) => {
-			this.#receiveWaiters.push({ resolve });
+		return new Promise<[T, true] | [undefined, false]>((resolve, reject) => {
+			const waiter = { resolve, isActive };
+			this.#receiveWaiters.push(waiter);
+
+			signal?.addEventListener("abort", () => {
+				const idx = this.#receiveWaiters.indexOf(waiter);
+				if (idx !== -1) {
+					this.#receiveWaiters.splice(idx, 1);
+					reject(signal.reason);
+				}
+			}, { once: true });
 		});
 	}
 
@@ -126,17 +207,22 @@ export class Channel<T> {
 		this.#closed = true;
 
 		// Wake up all waiting senders with error
-		this.#sendWaiters.forEach(() => {
-			// In a real implementation, we'd reject these promises
-			// For simplicity, we'll just clear the queue
-		});
-		this.#sendWaiters.length = 0;
+		const waiters = this.#sendWaiters;
+		this.#sendWaiters = [];
+		for (const waiter of waiters) {
+			if (!waiter.isActive || waiter.isActive()) {
+				waiter.reject(new Error("Channel: closed while sending"));
+			}
+		}
 
 		// Wake up all waiting receivers with closed signal
-		this.#receiveWaiters.forEach((waiter) => {
-			waiter.resolve([undefined, false]);
-		});
-		this.#receiveWaiters.length = 0;
+		const receiveWaiters = this.#receiveWaiters;
+		this.#receiveWaiters = [];
+		for (const waiter of receiveWaiters) {
+			if (!waiter.isActive || waiter.isActive()) {
+				waiter.resolve([undefined, false]);
+			}
+		}
 	}
 
 	/**
@@ -153,12 +239,14 @@ export class Channel<T> {
 			return [value, true];
 		}
 
-		if (this.#sendWaiters.length > 0) {
-			const waiter = this.#sendWaiters.shift();
-			if (waiter) {
-				waiter.resolve();
-				return [waiter.value, true];
+		while (this.#sendWaiters.length > 0) {
+			const waiter = this.#sendWaiters.shift()!;
+			if (waiter.isActive && !waiter.isActive()) {
+				continue;
 			}
+			const val = waiter.value;
+			waiter.resolve();
+			return [val, true];
 		}
 
 		return [undefined, false];
@@ -173,12 +261,13 @@ export class Channel<T> {
 		}
 
 		// If there's a waiting receiver, send directly
-		if (this.#receiveWaiters.length > 0) {
-			const waiter = this.#receiveWaiters.shift();
-			if (waiter) {
-				waiter.resolve([value, true]);
-				return true;
+		while (this.#receiveWaiters.length > 0) {
+			const waiter = this.#receiveWaiters.shift()!;
+			if (waiter.isActive && !waiter.isActive()) {
+				continue;
 			}
+			waiter.resolve([value, true]);
+			return true;
 		}
 
 		// If buffered and buffer has space, add to ring buffer
@@ -196,14 +285,15 @@ export class Channel<T> {
 	#processSendWaiters(): void {
 		// If buffer has space and there are waiting senders, move them to buffer
 		while (this.#count < this.#capacity && this.#sendWaiters.length > 0) {
-			const waiter = this.#sendWaiters.shift();
-			if (waiter) {
-				const buf = this.#buffer!;
-				buf[this.#tail] = waiter.value;
-				this.#tail = (this.#tail + 1) % this.#capacity;
-				this.#count++;
-				waiter.resolve();
+			const waiter = this.#sendWaiters.shift()!;
+			if (waiter.isActive && !waiter.isActive()) {
+				continue;
 			}
+			const buf = this.#buffer!;
+			buf[this.#tail] = waiter.value;
+			this.#tail = (this.#tail + 1) % this.#capacity;
+			this.#count++;
+			waiter.resolve();
 		}
 	}
 
@@ -245,6 +335,29 @@ export class Channel<T> {
 }
 
 /**
+ * SendChan represents the send-only side of a Channel.
+ */
+export interface SendChan<T> {
+	send(value: T): Promise<void>;
+	trySend(value: T): boolean;
+	close(): void;
+	readonly capacity: number;
+	readonly length: number;
+	readonly closed: boolean;
+}
+
+/**
+ * ReceiveChan represents the receive-only side of a Channel.
+ */
+export interface ReceiveChan<T> extends AsyncIterable<T> {
+	receive(): Promise<[T, true] | [undefined, false]>;
+	tryReceive(): [T, true] | [undefined, false];
+	readonly capacity: number;
+	readonly length: number;
+	readonly closed: boolean;
+}
+
+/**
  * Select cases for channel operations
  */
 export interface ReceiveCase<T = any> {
@@ -272,30 +385,20 @@ export type SelectCase<T = any> = ReceiveCase<T> | SendCase<T> | DefaultCase;
 /**
  * Select performs a select operation on multiple channel operations.
  * It waits for one of the cases to be ready and executes its action.
+ * If multiple cases are ready, one is chosen randomly.
  * If a default case is provided and no other cases are ready, it executes the default action.
  *
  * @param cases Array of select cases (receive, send, or default)
- *
- * @example
- * ```typescript
- * await select([
- *   { channel: ch1, action: (value, ok) => console.log('received:', value) },
- *   { channel: ch2, value: 'hello', action: () => console.log('sent') },
- *   { default: () => console.log('no operation ready') }
- * ]);
- * ```
  */
 export async function select<T = any>(cases: SelectCase<T>[]): Promise<void> {
 	if (cases.length === 0) {
 		throw new Error("select: no cases provided");
 	}
 
-	// Separate cases by type in a single pass - optimized for performance
 	const receiveCases: ReceiveCase<T>[] = [];
 	const sendCases: SendCase<T>[] = [];
 	let defaultCase: DefaultCase | undefined;
 
-	// Single pass classification with validation
 	for (const case_ of cases) {
 		if ("default" in case_) {
 			if (defaultCase) throw new Error("select: multiple default cases not allowed");
@@ -307,45 +410,75 @@ export async function select<T = any>(cases: SelectCase<T>[]): Promise<void> {
 		}
 	}
 
-	// Fast path: if default case exists and no operations are ready, execute immediately
-	if (defaultCase) {
-		const hasReadyOperation = receiveCases.some((case_) => case_.channel.hasData()) ||
-			sendCases.some((case_) => case_.channel.canSend());
-		if (!hasReadyOperation) {
-			defaultCase.default();
-			return;
+	// Shuffle cases to ensure fairness when multiple are ready
+	const allOps = [...receiveCases, ...sendCases].sort(() => Math.random() - 0.5);
+
+	// 1. Check if any operation is ready immediately
+	for (const op of allOps) {
+		if ("value" in op) {
+			// SendCase
+			const sendCase = op as SendCase<T>;
+			if (sendCase.channel.canSend()) {
+				if (sendCase.channel.trySend(sendCase.value)) {
+					sendCase.action();
+					return;
+				}
+			}
+		} else {
+			// ReceiveCase
+			const receiveCase = op as ReceiveCase<T>;
+			if (receiveCase.channel.hasData()) {
+				const [val, ok] = receiveCase.channel.tryReceive();
+				if (ok || receiveCase.channel.closed) {
+					receiveCase.action(val, ok);
+					return;
+				}
+			}
 		}
 	}
 
-	// Create racing promises - optimized to avoid async function overhead
-	const promises: Promise<
-		{ type: "receive" | "send"; case_: ReceiveCase<T> | SendCase<T>; value?: T; ok?: boolean }
-	>[] = [];
+	// 2. If no operation is ready and we have a default case, execute it
+	if (defaultCase) {
+		defaultCase.default();
+		return;
+	}
 
-	// Add receive promises
-	for (const case_ of receiveCases) {
+	// 3. Otherwise, wait for the first operation to become ready
+	let done = false;
+	const controller = new AbortController();
+	const signal = controller.signal;
+	const isActive = () => !done;
+
+	const promises: Promise<void>[] = [];
+
+	for (const op of receiveCases) {
 		promises.push(
-			case_.channel.receive().then(([value, ok]) => ({
-				type: "receive" as const,
-				case_,
-				value,
-				ok,
-			})),
+			op.channel.receive({ signal, isActive }).then(([val, ok]) => {
+				if (done) return;
+				done = true;
+				controller.abort();
+				op.action(val, ok);
+			}).catch(() => {
+				// Ignore abort errors
+			}),
 		);
 	}
 
-	// Add send promises
-	for (const case_ of sendCases) {
+	for (const op of sendCases) {
 		promises.push(
-			case_.channel.send(case_.value).then(() => ({ type: "send" as const, case_ })),
+			op.channel.send(op.value, { signal, isActive }).then(() => {
+				if (done) return;
+				done = true;
+				controller.abort();
+				op.action();
+			}).catch(() => {
+				// Ignore abort errors
+			}),
 		);
 	}
 
-	// Race and execute winner - optimized with ternary operator
-	const result = await Promise.race(promises);
-	result.type === "receive"
-		? (result.case_ as ReceiveCase<T>).action(result.value!, result.ok!)
-		: (result.case_ as SendCase<T>).action();
+	await Promise.race(promises);
+	await Promise.allSettled(promises);
 }
 
 /**

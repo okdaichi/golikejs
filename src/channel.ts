@@ -350,7 +350,9 @@ export interface SendChan<T> {
  * ReceiveChan represents the receive-only side of a Channel.
  */
 export interface ReceiveChan<T> extends AsyncIterable<T> {
-	receive(options?: { signal?: AbortSignal; isActive?: () => boolean }): Promise<[T, true] | [undefined, false]>;
+	receive(
+		options?: { signal?: AbortSignal; isActive?: () => boolean },
+	): Promise<[T, true] | [undefined, false]>;
 	tryReceive(): [T, true] | [undefined, false];
 	readonly capacity: number;
 	readonly length: number;

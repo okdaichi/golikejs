@@ -1,7 +1,7 @@
 /**
  * Channel provides Go-style channels for communication between async operations.
  * It supports both unbuffered and buffered channels.
- * 
+ *
  * @example
  * ```ts
  * const ch = new Channel<number>(1);
@@ -17,13 +17,13 @@ export class Channel<T> implements AsyncIterable<T> {
 	#tail = 0; // index of next write
 	#count = 0; // number of items in buffer
 	#closed = false;
-	#sendWaiters: Array<{ 
-		value: T; 
-		resolve: () => void; 
+	#sendWaiters: Array<{
+		value: T;
+		resolve: () => void;
 		reject: (err: any) => void;
 		isActive?: () => boolean;
 	}> = [];
-	#receiveWaiters: Array<{ 
+	#receiveWaiters: Array<{
 		resolve: (value: [T, true] | [undefined, false]) => void;
 		isActive?: () => boolean;
 	}> = [];
@@ -43,7 +43,7 @@ export class Channel<T> implements AsyncIterable<T> {
 	/**
 	 * Create a channel from an iterable or async iterable.
 	 * The channel is closed once the iterable is exhausted.
-	 * 
+	 *
 	 * @example
 	 * ```ts
 	 * const ch = Chan.from([1, 2, 3]);
@@ -71,7 +71,7 @@ export class Channel<T> implements AsyncIterable<T> {
 	/**
 	 * [Symbol.asyncIterator] allows using the channel in a for await...of loop.
 	 * The loop continues until the channel is closed and all buffered values are received.
-	 * 
+	 *
 	 * @example
 	 * ```ts
 	 * for await (const val of ch) {
@@ -92,7 +92,7 @@ export class Channel<T> implements AsyncIterable<T> {
 	/**
 	 * Send a value to the channel. For buffered channels, this may block if the buffer is full.
 	 * For unbuffered channels, this blocks until a receiver is ready.
-	 * 
+	 *
 	 * @param value The value to send
 	 * @param options Options including AbortSignal and internal isActive check
 	 */
@@ -144,7 +144,7 @@ export class Channel<T> implements AsyncIterable<T> {
 
 	/**
 	 * Receive a value from the channel. Returns [value, true] if successful, or [undefined, false] if the channel is closed.
-	 * 
+	 *
 	 * @param options Options including AbortSignal and internal isActive check
 	 */
 	async receive(

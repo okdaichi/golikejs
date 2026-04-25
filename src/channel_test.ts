@@ -1,4 +1,4 @@
-import { Channel, select, receive, default_, send } from "./channel.ts";
+import { Channel, default_, receive, select, send } from "./channel.ts";
 import { assertEquals } from "@std/assert";
 
 Deno.test("Channel - basic send and receive", async () => {
@@ -20,7 +20,7 @@ Deno.test("Channel - buffered channel", async () => {
 	const ch = new Channel<number>(2);
 	await ch.send(1);
 	await ch.send(2);
-	
+
 	assertEquals(ch.length, 2);
 
 	const [v1, ok1] = await ch.receive();
@@ -60,7 +60,7 @@ Deno.test("Channel - async iterator", async () => {
 
 Deno.test("Channel - directional types", async () => {
 	const ch = new Channel<number>(1);
-	
+
 	const sendOnly = (c: import("./channel.ts").SendChan<number>) => {
 		return c.send(42);
 	};
@@ -105,8 +105,10 @@ Deno.test("Channel - select default", async () => {
 	let called = false;
 
 	await select([
-		receive(ch1).then(() => { }),
-		default_(() => { called = true; }),
+		receive(ch1).then(() => {}),
+		default_(() => {
+			called = true;
+		}),
 	]);
 
 	assertEquals(called, true);
@@ -115,20 +117,20 @@ Deno.test("Channel - select default", async () => {
 Deno.test("Channel - select no value loss", async () => {
 	const ch1 = new Channel<number>();
 	const ch2 = new Channel<number>();
-	
+
 	// Start a select that waits on both
 	const p = select([
 		receive(ch1).then(() => "ch1"),
-		receive(ch2).then(() => "ch2")
+		receive(ch2).then(() => "ch2"),
 	]);
-	
+
 	// Send to ch2, it should be picked
 	await ch2.send(2);
 	await p;
-	
+
 	// Now send to ch1, it should NOT be consumed by the already finished select
 	const pSend = ch1.send(1);
-	
+
 	// Try to receive from ch1, it should get 1
 	const [val, ok] = await ch1.receive();
 	await pSend;

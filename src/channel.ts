@@ -46,7 +46,7 @@ export class Channel<T> implements AsyncIterable<T> {
 	 *
 	 * @example
 	 * ```ts
-	 * const ch = Chan.from([1, 2, 3]);
+	 * const ch = Channel.from([1, 2, 3]);
 	 * for await (const val of ch) {
 	 *   console.log(val);
 	 * }
@@ -338,7 +338,7 @@ export class Channel<T> implements AsyncIterable<T> {
  * SendChan represents the send-only side of a Channel.
  */
 export interface SendChan<T> {
-	send(value: T): Promise<void>;
+	send(value: T, options?: { signal?: AbortSignal; isActive?: () => boolean }): Promise<void>;
 	trySend(value: T): boolean;
 	close(): void;
 	readonly capacity: number;
@@ -350,7 +350,7 @@ export interface SendChan<T> {
  * ReceiveChan represents the receive-only side of a Channel.
  */
 export interface ReceiveChan<T> extends AsyncIterable<T> {
-	receive(): Promise<[T, true] | [undefined, false]>;
+	receive(options?: { signal?: AbortSignal; isActive?: () => boolean }): Promise<[T, true] | [undefined, false]>;
 	tryReceive(): [T, true] | [undefined, false];
 	readonly capacity: number;
 	readonly length: number;

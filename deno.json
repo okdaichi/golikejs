@@ -16,6 +16,7 @@
     "test": "deno test",
     "test:watch": "deno test --watch",
     "test:coverage": "deno test --coverage=coverage && deno coverage coverage",
+    "bench": "deno bench bench/",
     "fmt": "deno fmt",
     "fmt:check": "deno fmt --check",
     "lint": "deno lint",

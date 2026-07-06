@@ -1,0 +1,83 @@
+[0m[38;5;245m    CPU | Intel(R) Core(TM) i7-10700K CPU @ 3.80GHz[0m
+[0m[38;5;245mRuntime | Deno 2.8.1 (x86_64-pc-windows-msvc)[0m
+
+[0m[38;5;245mfile:///D:/golikejs/bench/bytes_bench.ts[0m
+
+| benchmark                                                  | time/iter (avg) |        iter/s |      (min … max)      |      p75 |      p99 |     p995 |
+| ---------------------------------------------------------- | --------------- | ------------- | --------------------- | -------- | -------- | -------- |
+
+[0m[38;5;245mgroup[0m [0m[32mindex[0m
+| index (multi-byte needle, 64KiB haystack)                  | [0m[33m        81.3 µs[0m |        12,290 | ([0m[36m 72.8 µs[0m … [0m[35m312.0 µs[0m) |[0m[35m  83.1 µs | 136.9 µs | 155.4 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mcontains[0m
+| contains (multi-byte needle, 64KiB haystack)               | [0m[33m        78.7 µs[0m |        12,710 | ([0m[36m 72.9 µs[0m … [0m[35m235.1 µs[0m) |[0m[35m  77.6 µs | 129.2 µs | 133.6 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mindexByte[0m
+| indexByte (64KiB haystack)                                 | [0m[33m         7.5 ns[0m |   134,000,000 | ([0m[36m  6.8 ns[0m … [0m[35m 32.9 ns[0m) |[0m[35m   7.3 ns |  13.8 ns |  15.2 ns |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mcount[0m
+| count (multi-byte needle, 64KiB haystack)                  | [0m[33m        77.9 µs[0m |        12,840 | ([0m[36m 72.9 µs[0m … [0m[35m603.7 µs[0m) |[0m[35m  74.7 µs | 124.1 µs | 132.7 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mlastIndex[0m
+| lastIndex (multi-byte needle, 64KiB haystack)              | [0m[33m        67.3 µs[0m |        14,870 | ([0m[36m 64.1 µs[0m … [0m[35m291.9 µs[0m) |[0m[35m  64.7 µs | 111.2 µs | 115.9 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mequal[0m
+| equal (1KiB, differ at last byte)                          | [0m[33m       372.9 ns[0m |     2,682,000 | ([0m[36m340.3 ns[0m … [0m[35m  1.3 µs[0m) |[0m[35m 361.2 ns | 597.3 ns |   1.3 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mcompare[0m
+| compare (1KiB)                                             | [0m[33m       360.5 ns[0m |     2,774,000 | ([0m[36m340.1 ns[0m … [0m[35m624.9 ns[0m) |[0m[35m 349.1 ns | 608.0 ns | 624.9 ns |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mhasPrefix[0m
+| hasPrefix (1KiB prefix)                                    | [0m[33m       756.2 ns[0m |     1,322,000 | ([0m[36m697.5 ns[0m … [0m[35m  1.7 µs[0m) |[0m[35m 746.3 ns |   1.7 µs |   1.7 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mhasSuffix[0m
+| hasSuffix (1KiB suffix)                                    | [0m[33m       861.7 ns[0m |     1,160,000 | ([0m[36m802.6 ns[0m … [0m[35m  1.8 µs[0m) |[0m[35m 853.0 ns |   1.8 µs |   1.8 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mcut[0m
+| cut (multi-byte sep)                                       | [0m[33m        79.8 µs[0m |        12,530 | ([0m[36m 73.5 µs[0m … [0m[35m600.9 µs[0m) |[0m[35m  77.7 µs | 135.6 µs | 143.4 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32msplit[0m
+| split (multi-byte sep, n=-1)                               | [0m[33m        77.4 µs[0m |        12,930 | ([0m[36m 73.1 µs[0m … [0m[35m639.0 µs[0m) |[0m[35m  74.5 µs | 125.3 µs | 144.8 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mfields[0m
+| fields (whitespace split, 1.7KiB ascii)                    | [0m[33m       170.1 µs[0m |         5,880 | ([0m[36m112.1 µs[0m … [0m[35m  1.3 ms[0m) |[0m[35m 185.3 µs | 453.3 µs | 527.0 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mjoin[0m
+| join (350 parts)                                           | [0m[33m         4.6 ns[0m |   215,100,000 | ([0m[36m  4.3 ns[0m … [0m[35m 41.1 ns[0m) |[0m[35m   4.3 ns |   8.5 ns |   9.5 ns |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mBuffer.write[0m
+| Buffer.write (512B into 512-cap, no grow)                  | [0m[33m       705.0 ns[0m |     1,418,000 | ([0m[36m584.1 ns[0m … [0m[35m  1.2 µs[0m) |[0m[35m 746.1 ns |   1.2 µs |   1.2 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mBuffer.writeByte[0m
+| Buffer.writeByte x256                                      | [0m[33m         1.2 µs[0m |       860,600 | ([0m[36m900.0 ns[0m … [0m[35m296.0 µs[0m) |[0m[35m   1.0 µs |   2.1 µs |   3.4 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mBuffer.grow[0m
+| Buffer.grow path (256 writes of 64B triggering reallocs)   | [0m[33m        20.8 µs[0m |        48,000 | ([0m[36m  9.8 µs[0m … [0m[35m846.2 µs[0m) |[0m[35m  20.7 µs |  76.4 µs | 109.5 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mBuffer.read[0m
+| Buffer.read (512B out)                                     | [0m[33m         1.3 µs[0m |       767,800 | ([0m[36m  1.1 µs[0m … [0m[35m  1.6 µs[0m) |[0m[35m   1.4 µs |   1.6 µs |   1.6 µs |[0m
+
+
+[0m[38;5;245mfile:///D:/golikejs/bench/sync_bench.ts[0m
+
+| benchmark                                | time/iter (avg) |        iter/s |      (min … max)      |      p75 |      p99 |     p995 |
+| ---------------------------------------- | --------------- | ------------- | --------------------- | -------- | -------- | -------- |
+
+[0m[38;5;245mgroup[0m [0m[32mmutex-uncontended[0m
+| Mutex uncontended lock/unlock (1k)       | [0m[33m        28.4 µs[0m |        35,240 | ([0m[36m 21.0 µs[0m … [0m[35m330.0 µs[0m) |[0m[35m  25.6 µs |  94.2 µs | 106.4 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mrwmutex-read[0m
+| RWMutex uncontended rlock/runlock (1k)   | [0m[33m        28.0 µs[0m |        35,770 | ([0m[36m 21.9 µs[0m … [0m[35m614.2 µs[0m) |[0m[35m  25.9 µs |  91.9 µs | 100.6 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mrwmutex-write[0m
+| RWMutex uncontended wlock/unlock (1k)    | [0m[33m        29.4 µs[0m |        33,960 | ([0m[36m 21.3 µs[0m … [0m[35m288.6 µs[0m) |[0m[35m  26.7 µs |  99.5 µs | 118.4 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32msemaphore[0m
+| Semaphore(1) acquire/release (1k)        | [0m[33m        27.0 µs[0m |        37,020 | ([0m[36m 20.9 µs[0m … [0m[35m248.4 µs[0m) |[0m[35m  24.8 µs |  93.1 µs | 102.4 µs |[0m
+
+[0m[38;5;245mgroup[0m [0m[32monce[0m
+| Once.do (1k, already-done fast path)     | [0m[33m       169.0 µs[0m |         5,917 | ([0m[36m 19.1 µs[0m … [0m[35m 19.9 ms[0m) |[0m[35m  35.0 µs |   3.2 ms |  14.2 ms |[0m
+
+[0m[38;5;245mgroup[0m [0m[32mwaitgroup[0m
+| WaitGroup add/done (1k)                  | [0m[33m         1.9 µs[0m |       534,300 | ([0m[36m  1.8 µs[0m … [0m[35m  2.0 µs[0m) |[0m[35m   1.9 µs |   2.0 µs |   2.0 µs |[0m
+

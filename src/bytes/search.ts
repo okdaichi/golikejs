@@ -103,16 +103,33 @@ export function hasSuffix(s: Uint8Array, suffix: Uint8Array): boolean {
 }
 
 // index returns the index of the first instance of sep in s, or -1 if sep is not present in s.
+//
+// Uses a first-byte scan + tail-verify strategy: native Uint8Array.indexOf drives the
+// dominant rejection path through V8's SIMD/SWAR single-byte search, then the remainder
+// of the needle is verified with a short-circuiting compare. This mirrors the approach
+// production Go's bytes.Index takes. Worst case remains O(n*m) (e.g. a very common first
+// byte with few full matches), but the constant is dramatically smaller than a nested loop.
 export function index(s: Uint8Array, sep: Uint8Array): number {
-	if (sep.length === 0) {
+	const m = sep.length;
+	if (m === 0) {
 		return 0;
 	}
-	if (sep.length > s.length) {
+	if (m === 1) {
+		return s.indexOf(sep[0]!);
+	}
+	if (m > s.length) {
 		return -1;
 	}
-	for (let i = 0; i <= s.length - sep.length; i++) {
+	const first = sep[0]!;
+	const limit = s.length - m;
+	let i = 0;
+	while (true) {
+		i = s.indexOf(first, i);
+		if (i < 0 || i > limit) {
+			return -1;
+		}
 		let match = true;
-		for (let j = 0; j < sep.length; j++) {
+		for (let j = 1; j < m; j++) {
 			if (s[i + j] !== sep[j]) {
 				match = false;
 				break;
@@ -121,8 +138,8 @@ export function index(s: Uint8Array, sep: Uint8Array): number {
 		if (match) {
 			return i;
 		}
+		i++;
 	}
-	return -1;
 }
 
 // indexAny interprets s as a sequence of UTF-8-encoded Unicode code points.
@@ -174,16 +191,28 @@ export function indexRune(s: Uint8Array, r: number): number {
 }
 
 // lastIndex returns the index of the last instance of sep in s, or -1 if sep is not present in s.
+//
+// Backward first-byte scan via native lastIndexOf + tail-verify (mirror of index()).
 export function lastIndex(s: Uint8Array, sep: Uint8Array): number {
-	if (sep.length === 0) {
+	const m = sep.length;
+	if (m === 0) {
 		return s.length;
 	}
-	if (sep.length > s.length) {
+	if (m === 1) {
+		return s.lastIndexOf(sep[0]!);
+	}
+	if (m > s.length) {
 		return -1;
 	}
-	for (let i = s.length - sep.length; i >= 0; i--) {
+	const first = sep[0]!;
+	let i = s.length - m;
+	while (true) {
+		i = s.lastIndexOf(first, i);
+		if (i < 0) {
+			return -1;
+		}
 		let match = true;
-		for (let j = 0; j < sep.length; j++) {
+		for (let j = 1; j < m; j++) {
 			if (s[i + j] !== sep[j]) {
 				match = false;
 				break;
@@ -192,8 +221,8 @@ export function lastIndex(s: Uint8Array, sep: Uint8Array): number {
 		if (match) {
 			return i;
 		}
+		i--;
 	}
-	return -1;
 }
 
 // lastIndexAny interprets s as a sequence of UTF-8-encoded Unicode code points.

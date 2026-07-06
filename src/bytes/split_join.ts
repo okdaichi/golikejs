@@ -206,16 +206,28 @@ function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
 	return result;
 }
 
+// First-byte scan + tail-verify (see src/bytes/search.ts index for rationale).
 function index(s: Uint8Array, sep: Uint8Array): number {
-	if (sep.length === 0) {
+	const m = sep.length;
+	if (m === 0) {
 		return 0;
 	}
-	if (sep.length > s.length) {
+	if (m === 1) {
+		return s.indexOf(sep[0]!);
+	}
+	if (m > s.length) {
 		return -1;
 	}
-	for (let i = 0; i <= s.length - sep.length; i++) {
+	const first = sep[0]!;
+	const limit = s.length - m;
+	let i = 0;
+	while (true) {
+		i = s.indexOf(first, i);
+		if (i < 0 || i > limit) {
+			return -1;
+		}
 		let match = true;
-		for (let j = 0; j < sep.length; j++) {
+		for (let j = 1; j < m; j++) {
 			if (s[i + j] !== sep[j]) {
 				match = false;
 				break;
@@ -224,8 +236,8 @@ function index(s: Uint8Array, sep: Uint8Array): number {
 		if (match) {
 			return i;
 		}
+		i++;
 	}
-	return -1;
 }
 
 function hasPrefix(s: Uint8Array, prefix: Uint8Array): boolean {

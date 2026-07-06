@@ -23,6 +23,7 @@ How was this tested?
 
 ## Checklist
 
-- [ ] Comments added for complex logic
-- [ ] Documentation updated if needed
+- [ ] **CHANGELOG.md updated** (or `no-changelog` label applied)
 - [ ] Tests added/updated
+- [ ] Documentation updated if needed
+- [ ] Comments added for complex logic

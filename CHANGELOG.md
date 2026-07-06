@@ -10,12 +10,40 @@ The format is based on "Keep a Changelog" and this project adheres to Semantic V
 
 ### Added
 
+- **CI/release automation**: Required-changelog workflow (enforces CHANGELOG.md updates on non-trivial PRs, with a `no-changelog` label escape hatch) and a tag-driven Release workflow (`deno publish` to JSR + GitHub Release on `v*` tags).
 - **`sync.Once`**: Added Go-style `Once` synchronization primitive to the sync package.
   - Ensures a function is executed exactly once, even under concurrent calls
   - Promise-based implementation optimized for JavaScript's event loop
   - Full type safety with generic return types
   - Handles errors while marking the operation as "done" (matching Go semantics)
   - Includes comprehensive test suite (9 test cases) covering concurrent execution, error handling, and type preservation
+
+## [0.10.0] - 2026-07-06
+
+### Changed
+
+- **`bytes.index` / `bytes.lastIndex`**: Replaced the O(n·m) nested-loop search with a first-byte scan via native `Uint8Array.indexOf`/`lastIndexOf` plus a short-circuit tail compare (the strategy production Go's `bytes.Index` uses). Throughput wins cascade to `contains`, `count`, `cut`, and `split`, all of which delegate to `index`.
+- **`bytes.fields`**: Added a zero-copy ASCII fast path — a single byte scan returning subslices of the input (matching the documented "subslices of s" contract and Go's `bytes.Fields`). Non-ASCII input falls back to the unchanged `/\s/`-based path. **Behavior note:** for ASCII input the returned subslices now alias `s`; callers needing independent memory should copy.
+- **`bytes.equal`**: Compare 4 bytes at a time via aligned `Uint32Array` views (~1.9× faster), falling back to a byte loop for unaligned subarrays.
+
+### Fixed
+
+- **`channel.select`**: Replaced the biased `.sort(() => Math.random() - 0.5)` fairness step with reservoir sampling (k=1), which is genuinely uniform, O(n), allocation-free, and faster. The previous shuffle systematically disadvantaged later cases.
+
+### Performance
+
+| Operation | Before | After | Δ |
+| --- | --- | --- | --- |
+| `index` (64 KiB, 8-byte needle) | 81.3 µs | 25.2 µs | −69% |
+| `contains` | 78.7 µs | 26.5 µs | −66% |
+| `count` | 77.9 µs | 26.5 µs | −66% |
+| `cut` | 79.8 µs | 25.6 µs | −68% |
+| `split` | 77.5 µs | 25.2 µs | −67% |
+| `lastIndex` | 66.5 µs | 27.3 µs | −59% |
+| `fields` (1.7 KiB ASCII) | 137.4 µs | 13.2 µs | −90% |
+| `equal` (1 KiB) | 372.4 ns | 192.2 ns | −48% |
+| `select` w/ default (1k polls) | 185.1 µs | 134.0 µs | −28% |
+| `select` 2 chans (1k ready) | 312.6 µs | 252.9 µs | −19% |
 
 ## [0.6.1] - 2025-12-09
 

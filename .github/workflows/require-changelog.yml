@@ -1,0 +1,67 @@
+name: "Require CHANGELOG Update"
+
+# Adapted from the qumo project. Enforces that PRs carrying non-trivial changes
+# also add an entry to CHANGELOG.md. Escape hatches: the `no-changelog` label,
+# and bot authors (dependabot, etc.).
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-changelog:
+    # Skip for bots
+    if: github.actor != 'dependabot[bot]' && github.actor != 'renovate[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Short-circuit on no-changelog label
+        id: check_label
+        if: contains(github.event.pull_request.labels.*.name, 'no-changelog')
+        run: echo "no-changelog label present — skipping CHANGELOG check."
+
+      - name: Checkout PR branch
+        if: "!contains(github.event.pull_request.labels.*.name, 'no-changelog')"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for non-trivial changes
+        id: changed_files
+        if: "!contains(github.event.pull_request.labels.*.name, 'no-changelog')"
+        run: |
+          # Native git diff (not tj-actions/changed-files, CVE-2025-30066).
+          # any_changed is true if any changed file is NOT in the ignore set
+          # (.github/**, docs/**, *_test.ts, *_bench.ts, *.md) — i.e. a change
+          # that warrants a CHANGELOG entry.
+          if git diff --name-only "origin/${{ github.base_ref }}...HEAD" \
+            | grep -vE '^(\.github|docs)/|_test\.ts$|_bench\.ts$|\.md$' | grep -q .; then
+            echo "any_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "any_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify CHANGELOG.md content modification
+        if: "!contains(github.event.pull_request.labels.*.name, 'no-changelog') && steps.changed_files.outputs.any_changed == 'true'"
+        run: |
+          if git diff --name-only "origin/${{ github.base_ref }}...HEAD" | grep -q '^CHANGELOG\.md$'; then
+            # Ensure there are actual additions, not just deletions/whitespace.
+            ADDITIONS=$(git diff "origin/${{ github.base_ref }}...HEAD" -- CHANGELOG.md | grep -cE '^\+[^+]') || true
+            if [ "$ADDITIONS" -gt 0 ]; then
+              echo "CHANGELOG.md has valid updates ($ADDITIONS lines added)."
+            else
+              echo "::error file=CHANGELOG.md,line=1::CHANGELOG.md was modified, but no new content was added. Please add an entry."
+              exit 1
+            fi
+          else
+            echo "::error file=CHANGELOG.md,line=1::Pull request must include a change to CHANGELOG.md (add a new entry, or apply the 'no-changelog' label if omitted intentionally)."
+            exit 1
+          fi

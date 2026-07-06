@@ -30,7 +30,7 @@ jobs:
 
       - name: Checkout PR branch
         if: "!contains(github.event.pull_request.labels.*.name, 'no-changelog')"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

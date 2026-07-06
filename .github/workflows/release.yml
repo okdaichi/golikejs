@@ -4,10 +4,9 @@ name: Release
 # Push a tag matching `v<deno.json version>` (e.g. v0.10.0) to publish to JSR
 # and create a GitHub Release.
 #
-# Prerequisite: add a `JSR_TOKEN` secret (create one at https://jsr.io).
-# Alternative (no secret): JSR "Publish from GitHub Actions" via OIDC — grant
-# `id-token: write` (already set below) and enable the pipeline on your jsr.io
-# scope, then drop `--token ${{ secrets.JSR_TOKEN }}`.
+# Publishing authenticates automatically via OIDC (no secret required): the
+# package is linked to this GitHub repo on jsr.io, and the `id-token: write`
+# permission below enables that. See https://jsr.io/docs/publishing#oidc .
 
 on:
   push:
@@ -16,7 +15,7 @@ on:
 
 permissions:
   contents: write # create GitHub Release
-  id-token: write # JSR OIDC publish (if used instead of JSR_TOKEN)
+  id-token: write # JSR OIDC publish
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -55,7 +54,7 @@ jobs:
           deno test
 
       - name: Publish to JSR
-        run: deno publish --token ${{ secrets.JSR_TOKEN }}
+        run: deno publish
 
       - name: Extract changelog section for this version
         run: |

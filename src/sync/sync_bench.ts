@@ -1,9 +1,10 @@
-// Baseline + regression benchmarks for sync/* primitives.
-import { Mutex } from "../src/sync/mutex.ts";
-import { RWMutex } from "../src/sync/rwmutex.ts";
-import { Semaphore } from "../src/sync/semaphore.ts";
-import { Once } from "../src/sync/once.ts";
-import { WaitGroup } from "../src/sync/waitgroup.ts";
+// Benchmarks for sync/* primitives. Run: deno bench
+// Co-located with source (Go-style). Not collected by `deno test`.
+import { Mutex } from "./mutex.ts";
+import { RWMutex } from "./rwmutex.ts";
+import { Semaphore } from "./semaphore.ts";
+import { Once } from "./once.ts";
+import { WaitGroup } from "./waitgroup.ts";
 
 Deno.bench(
 	"Mutex uncontended lock/unlock (1k)",

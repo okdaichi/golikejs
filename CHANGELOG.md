@@ -11,12 +11,6 @@ The format is based on "Keep a Changelog" and this project adheres to Semantic V
 ### Added
 
 - **CI/release automation**: Required-changelog workflow (enforces CHANGELOG.md updates on non-trivial PRs, with a `no-changelog` label escape hatch) and a tag-driven Release workflow (`deno publish` to JSR + GitHub Release on `v*` tags).
-- **`sync.Once`**: Added Go-style `Once` synchronization primitive to the sync package.
-  - Ensures a function is executed exactly once, even under concurrent calls
-  - Promise-based implementation optimized for JavaScript's event loop
-  - Full type safety with generic return types
-  - Handles errors while marking the operation as "done" (matching Go semantics)
-  - Includes comprehensive test suite (9 test cases) covering concurrent execution, error handling, and type preservation
 
 ## [0.10.0] - 2026-07-06
 
@@ -44,6 +38,38 @@ The format is based on "Keep a Changelog" and this project adheres to Semantic V
 | `equal` (1 KiB) | 372.4 ns | 192.2 ns | −48% |
 | `select` w/ default (1k polls) | 185.1 µs | 134.0 µs | −28% |
 | `select` 2 chans (1k ready) | 312.6 µs | 252.9 µs | −19% |
+
+## [0.9.0] - 2026-04-25
+
+### Notes
+
+- No user-facing changes since 0.8.0 (republish).
+
+## [0.8.0] - 2026-04-25
+
+### Added
+
+- **`channel`**: Major overhaul of the Channel primitive.
+  - Buffered and unbuffered channels.
+  - Async iterator support (`for await ... of`).
+  - Directional `SendChan` / `ReceiveChan` interfaces.
+  - `Channel.from(iterable)` static factory.
+  - Enhanced `select` handling multiple cases with a `default` case.
+  - Comprehensive test coverage for channel operations, async iteration, and select.
+
+### Changed
+
+- **`channel`**: `send` and `receive` accept an options object (e.g. `AbortSignal` and an internal `isActive` predicate) to support cancellation and `select` coordination.
+
+## [0.7.0] - 2025-12-24
+
+### Added
+
+- **`sync.Once`**: Go-style `Once` synchronization primitive — executes a function exactly once, even under concurrent calls. Promise-based, fully typed with generic return types, and treats a throwing function as "done" (matching Go semantics).
+
+### Changed
+
+- **Package name**: Package prefix changed from `@okudai/golikejs` to `@okdaichi/golikejs` to match the updated username. *(Also previously noted under 0.6.1.)*
 
 ## [0.6.1] - 2025-12-09
 

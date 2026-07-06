@@ -56,11 +56,40 @@ export function count(s: Uint8Array, sep: Uint8Array): number {
 
 // equal reports whether a and b are the same length and contain the same bytes.
 // A nil argument is equivalent to an empty slice.
+//
+// Compares 4 bytes at a time via Uint32Array views when both operands are
+// 4-byte aligned at their byteOffset (4x fewer loop iterations); otherwise
+// falls back to a byte loop. Endianness is irrelevant to equality.
 export function equal(a: Uint8Array, b: Uint8Array): boolean {
-	if (a.length !== b.length) {
+	const n = a.length;
+	if (n !== b.length) {
 		return false;
 	}
-	for (let i = 0; i < a.length; i++) {
+	if (n === 0) {
+		return true;
+	}
+	// Fast path: both views 4-byte aligned -> compare 4 bytes per iteration.
+	if (a.byteOffset % 4 === 0 && b.byteOffset % 4 === 0) {
+		const chunks = n >>> 2;
+		if (chunks > 0) {
+			const av = new Uint32Array(a.buffer, a.byteOffset, chunks);
+			const bv = new Uint32Array(b.buffer, b.byteOffset, chunks);
+			for (let i = 0; i < chunks; i++) {
+				if (av[i] !== bv[i]) {
+					return false;
+				}
+			}
+		}
+		const tail = chunks << 2;
+		for (let i = tail; i < n; i++) {
+			if (a[i] !== b[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+	// Fallback: byte loop for unaligned subarrays.
+	for (let i = 0; i < n; i++) {
 		if (a[i] !== b[i]) {
 			return false;
 		}

@@ -1,0 +1,76 @@
+name: Release
+
+# Tag-driven release for the JSR package @okdaichi/golikejs.
+# Push a tag matching `v<deno.json version>` (e.g. v0.10.0) to publish to JSR
+# and create a GitHub Release.
+#
+# Prerequisite: add a `JSR_TOKEN` secret (create one at https://jsr.io).
+# Alternative (no secret): JSR "Publish from GitHub Actions" via OIDC — grant
+# `id-token: write` (already set below) and enable the pipeline on your jsr.io
+# scope, then drop `--token ${{ secrets.JSR_TOKEN }}`.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # create GitHub Release
+  id-token: write # JSR OIDC publish (if used instead of JSR_TOKEN)
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Publish to JSR & create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Verify tag matches deno.json version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}" # strip leading "v"
+          VERSION=$(deno eval 'console.log(JSON.parse(Deno.readTextFileSync("deno.json")).version)')
+          echo "Tag: $TAG | deno.json: $VERSION"
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "::error::git tag '$TAG' does not match deno.json version '$VERSION'"
+            exit 1
+          fi
+
+      - name: Sanity checks (fmt, lint, type-check, tests)
+        run: |
+          deno fmt --check
+          deno lint
+          deno check src/**/*.ts
+          deno test
+
+      - name: Publish to JSR
+        run: deno publish --token ${{ secrets.JSR_TOKEN }}
+
+      - name: Extract changelog section for this version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          deno run -A .github/scripts/extract_changelog.ts "$VERSION" > release_notes.md
+          {
+            echo "## ${GITHUB_REF_NAME}"
+            echo ""
+            cat release_notes.md
+          } > release_body.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          body_path: release_body.md
+          generate_release_notes: true
+          fail_on_unmatched_files: false

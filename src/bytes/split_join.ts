@@ -36,11 +36,43 @@ export function cutSuffix(s: Uint8Array, suffix: Uint8Array): [Uint8Array, boole
 }
 
 // fields interprets s as a sequence of UTF-8-encoded code points.
-// It splits the slice s around each instance of one or more consecutive white space characters, as defined by unicode.IsSpace, returning a slice of subslices of s or an empty slice if s contains only white space.
+// It splits the slice s around each instance of one or more consecutive white space
+// characters, as defined by unicode.IsSpace, returning a slice of subslices of s
+// or an empty slice if s contains only white space.
+//
+// ASCII fast path: when every byte is ASCII, scan once and return subslices of s
+// (zero-copy, like Go's bytes.Fields). When a non-ASCII byte is encountered, fall
+// back to the /\s/-based path so Unicode whitespace semantics are unchanged. The
+// returned subslices alias the input s; callers that need independent memory should
+// copy (e.g. .slice()).
 export function fields(s: Uint8Array): Uint8Array[] {
+	const result: Uint8Array[] = [];
+	let start = -1;
+	for (let i = 0; i < s.length; i++) {
+		const b = s[i]!;
+		if (b >= 0x80) {
+			// Non-ASCII present: defer to the Unicode-aware path (unchanged semantics).
+			return fieldsUnicode(s);
+		}
+		if (b === 0x20 || (b >= 0x09 && b <= 0x0d)) {
+			// ASCII whitespace (\t \n \v \f \r space)
+			if (start >= 0) {
+				result.push(s.subarray(start, i));
+				start = -1;
+			}
+		} else if (start < 0) {
+			start = i;
+		}
+	}
+	if (start >= 0) result.push(s.subarray(start));
+	return result;
+}
+
+// Unicode-aware fields: decode and split on /\s+/. Returns independent copies.
+function fieldsUnicode(s: Uint8Array): Uint8Array[] {
 	const str = new TextDecoder().decode(s);
-	const fields = str.split(/\s+/).filter((f) => f.length > 0);
-	return fields.map((f) => new TextEncoder().encode(f));
+	const parts = str.split(/\s+/).filter((f) => f.length > 0);
+	return parts.map((f) => new TextEncoder().encode(f));
 }
 
 // fieldsFunc interprets s as a sequence of UTF-8-encoded code points.

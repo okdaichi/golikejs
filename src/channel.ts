@@ -412,31 +412,50 @@ export async function select<T = any>(cases: SelectCase<T>[]): Promise<void> {
 		}
 	}
 
-	// Shuffle cases to ensure fairness when multiple are ready
-	const allOps = [...receiveCases, ...sendCases].sort(() => Math.random() - 0.5);
-
-	// 1. Check if any operation is ready immediately
-	for (const op of allOps) {
-		if ("value" in op) {
-			// SendCase
-			const sendCase = op as SendCase<T>;
-			if (sendCase.channel.canSend()) {
-				if (sendCase.channel.trySend(sendCase.value)) {
-					sendCase.action();
-					return;
-				}
-			}
-		} else {
-			// ReceiveCase
-			const receiveCase = op as ReceiveCase<T>;
-			if (receiveCase.channel.hasData()) {
-				const [val, ok] = receiveCase.channel.tryReceive();
-				if (ok || receiveCase.channel.closed) {
-					receiveCase.action(val, ok);
-					return;
-				}
+	// 1. Find a ready operation, choosing uniformly at random among ALL ready
+	//    cases via reservoir sampling (k=1). This is O(n), allocation-free, and
+	//    uniformly fair -- replacing `.sort(() => Math.random() - 0.5)`, which
+	//    was neither uniform (comparator-based "shuffles" are biased: earlier
+	//    elements are systematically favored) nor cheap (O(n log n) comparator
+	//    calls plus an array allocation on every select). Readiness is probed
+	//    with the side-effect-free hasData()/canSend(); the single chosen op is
+	//    then performed.
+	let chosenKind: "recv" | "send" | undefined;
+	let chosenRecv: ReceiveCase<T> | undefined;
+	let chosenSend: SendCase<T> | undefined;
+	let ready = 0;
+	for (const op of receiveCases) {
+		if (op.channel.hasData()) {
+			ready++;
+			if (Math.random() * ready < 1) {
+				chosenKind = "recv";
+				chosenRecv = op;
 			}
 		}
+	}
+	for (const op of sendCases) {
+		if (op.channel.canSend()) {
+			ready++;
+			if (Math.random() * ready < 1) {
+				chosenKind = "send";
+				chosenSend = op;
+			}
+		}
+	}
+	if (chosenKind === "recv" && chosenRecv) {
+		const [val, ok] = chosenRecv.channel.tryReceive();
+		if (ok || chosenRecv.channel.closed) {
+			chosenRecv.action(val, ok);
+			return;
+		}
+		// Stale readiness (e.g. a sendWaiter deactivated by a concurrent select);
+		// fall through to the default / blocking path.
+	} else if (chosenKind === "send" && chosenSend) {
+		if (chosenSend.channel.trySend(chosenSend.value)) {
+			chosenSend.action();
+			return;
+		}
+		// Stale readiness; fall through.
 	}
 
 	// 2. If no operation is ready and we have a default case, execute it
